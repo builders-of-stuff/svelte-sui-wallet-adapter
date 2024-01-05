@@ -9,7 +9,7 @@
     MinimallyRequiredFeatures
   } from '@mysten/wallet-standard';
   import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
-  import { getRegisteredWallets } from '$lib/index.js';
+  import { getRegisteredWallets, createWalletStore } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
@@ -38,6 +38,9 @@
   /**
    * walletStore.ts
    */
+  const walletStore = createWalletStore();
+
+  console.log('walletStore: ', walletStore);
 
   /**
    * Playground

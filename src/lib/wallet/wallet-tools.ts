@@ -7,11 +7,7 @@ import type {
 } from '@mysten/wallet-standard';
 import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
 
-const DEFAULT_STORAGE_KEY = 'sui-dapp-kit:wallet-connection-info';
-const SUI_WALLET_NAME = 'Sui Wallet';
-const DEFAULT_REQUIRED_FEATURES: (keyof WalletWithRequiredFeatures['features'])[] = [
-  'sui:signTransactionBlock'
-];
+import { DEFAULT_REQUIRED_FEATURES, SUI_WALLET_NAME } from './wallet.constant.js';
 
 export const getRegisteredWallets = (
   preferredWallets: string[] = [SUI_WALLET_NAME]
@@ -34,3 +30,7 @@ export const getRegisteredWallets = (
     ...suiWallets.filter((wallet) => !preferredWallets.includes(wallet.name))
   ];
 };
+
+export function getWalletUniqueIdentifier(wallet?: Wallet) {
+  return wallet?.id ?? wallet?.name;
+}
