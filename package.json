@@ -1,5 +1,5 @@
 {
-  "name": "svelte-sui-wallet-adapter",
+  "name": "@builders-of-stuff/svelte-sui-wallet-adapter",
   "version": "0.0.1",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",

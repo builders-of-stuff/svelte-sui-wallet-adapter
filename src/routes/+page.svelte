@@ -9,6 +9,7 @@
     MinimallyRequiredFeatures
   } from '@mysten/wallet-standard';
   import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
+  import { getRegisteredWallets } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
@@ -25,24 +26,10 @@
   /**
    * WalletProvider stuff (dapp-kit)
    */
-  const DEFAULT_STORAGE_KEY = 'sui-dapp-kit:wallet-connection-info';
-  const SUI_WALLET_NAME = 'Sui Wallet';
-  const DEFAULT_REQUIRED_FEATURES: (keyof WalletWithRequiredFeatures['features'])[] = [
-    'sui:signTransactionBlock'
-  ];
-
   /**
    * getRegisteredWallets
    */
-  let walletsApi = getWallets();
-  const wallets = walletsApi.get();
-
-  const suiWallets = wallets.filter(
-    (wallet): wallet is WalletWithFeatures<MinimallyRequiredFeatures> =>
-      isWalletWithRequiredFeatureSet(wallet, DEFAULT_REQUIRED_FEATURES)
-  );
-
-  console.log('suiWallets: ', suiWallets);
+  const suiWallets = getRegisteredWallets();
 
   suiWallets.forEach((wallet) => {
     console.log('wallet: ', wallet.name);
