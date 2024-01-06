@@ -3,6 +3,9 @@ import type { WalletAccount } from '@mysten/wallet-standard';
 import { getWalletUniqueIdentifier } from './wallet-tools.js';
 import type { StoreState, WalletConnectionStatus } from './wallet.type.js';
 
+/**
+ * @TODO Add support for persistance (localStorage?)
+ */
 export function createWalletStore({
   wallets: _wallets = [],
   // storage = localStorage,
@@ -62,8 +65,10 @@ export function createWalletStore({
     accounts = updatedAccounts;
     currentAccount =
       (currentAccount &&
-        updatedAccounts.find(({ address }) => address === currentAccount?.address)) ||
-      updatedAccounts[0];
+        updatedAccounts?.find?.(
+          ({ address }) => address === currentAccount?.address
+        )) ||
+      updatedAccounts?.[0];
   };
 
   return {
@@ -100,3 +105,5 @@ export function createWalletStore({
     updateWalletAccounts
   };
 }
+
+export const walletStore = createWalletStore({});
