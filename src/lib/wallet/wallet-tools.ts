@@ -31,6 +31,6 @@ export const getRegisteredWallets = (
   ];
 };
 
-export function getWalletUniqueIdentifier(wallet?: Wallet) {
+export function getWalletUniqueIdentifier(wallet: Wallet) {
   return wallet?.id ?? wallet?.name;
 }

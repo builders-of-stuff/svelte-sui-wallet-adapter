@@ -4,7 +4,7 @@ import type {
   WalletWithRequiredFeatures
 } from '@mysten/wallet-standard';
 
-type WalletConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+export type WalletConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 export type WalletActions = {
   setAccountSwitched: (selectedAccount: WalletAccount) => void;
