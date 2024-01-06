@@ -10,6 +10,7 @@ import {
   getWalletUniqueIdentifier
 } from './wallet-tools.js';
 import type { StoreState, WalletConnectionStatus } from './wallet.type.js';
+import { untrack } from 'svelte';
 
 /**
  * Mostly ported logic from sui/sdk/dapp-kit/...WalletProvider.tsx
@@ -152,12 +153,17 @@ export function createWalletStore({
         return 'disabled';
       }
 
-      if (!lastConnectedWalletName || !lastConnectedAccountAddress || isConnected) {
+      if (
+        !untrack(() => lastConnectedWalletName) ||
+        !untrack(() => lastConnectedAccountAddress) ||
+        untrack(() => isConnected)
+      ) {
         return 'attempted';
       }
 
-      const wallet = wallets?.find?.(
-        (wallet) => getWalletUniqueIdentifier(wallet) === lastConnectedWalletName
+      const wallet = untrack(() => wallets)?.find?.(
+        (wallet) =>
+          getWalletUniqueIdentifier(wallet) === untrack(() => lastConnectedWalletName)
       ) as any;
 
       if (wallet) {
@@ -174,7 +180,7 @@ export function createWalletStore({
           );
           const selectedAccount = getSelectedAccount(
             connectedSuiAccounts,
-            lastConnectedAccountAddress
+            untrack(() => lastConnectedAccountAddress) as any
           );
 
           setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
