@@ -32,4 +32,7 @@ export type StoreState = {
   lastConnectedAccountAddress: string | null;
   lastConnectedWalletName: string | null;
   connectionStatus: WalletConnectionStatus;
+  isConnected: boolean;
+  isConnecting: boolean;
+  isDisconnected: boolean;
 } & WalletActions;

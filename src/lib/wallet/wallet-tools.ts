@@ -1,9 +1,8 @@
 import type {
   Wallet,
-  WalletAccount,
-  WalletWithRequiredFeatures,
   WalletWithFeatures,
-  MinimallyRequiredFeatures
+  MinimallyRequiredFeatures,
+  WalletAccount
 } from '@mysten/wallet-standard';
 import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
 
@@ -33,4 +32,22 @@ export const getRegisteredWallets = (
 
 export function getWalletUniqueIdentifier(wallet: Wallet) {
   return wallet?.id ?? wallet?.name;
+}
+
+export function getSelectedAccount(
+  connectedAccounts: readonly WalletAccount[],
+  accountAddress?: string
+) {
+  if (connectedAccounts?.length === 0) {
+    return null;
+  }
+
+  if (accountAddress) {
+    const selectedAccount = connectedAccounts?.find?.(
+      (account) => account?.address === accountAddress
+    );
+    return selectedAccount ?? connectedAccounts?.[0];
+  }
+
+  return connectedAccounts?.[0];
 }
