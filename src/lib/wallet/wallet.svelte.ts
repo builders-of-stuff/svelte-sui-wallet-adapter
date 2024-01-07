@@ -3,6 +3,7 @@ import type {
   WalletWithRequiredFeatures
 } from '@mysten/wallet-standard';
 import { getWallets } from '@mysten/wallet-standard';
+import { untrack } from 'svelte';
 
 import {
   getRegisteredWallets,
@@ -10,7 +11,6 @@ import {
   getWalletUniqueIdentifier
 } from './wallet-tools.js';
 import type { StoreState, WalletConnectionStatus } from './wallet.type.js';
-import { untrack } from 'svelte';
 import { SUI_WALLET_NAME } from './wallet.constant.js';
 
 /**
@@ -108,6 +108,8 @@ export function createWalletStore(
 
   /**
    * Effects
+   *
+   * $effect.root required for using $effect outside a component
    */
   $effect.root(() => {
     // useWalletsChanged
@@ -179,15 +181,18 @@ export function createWalletStore(
         if (wallet) {
           try {
             setConnectionStatus('connecting');
+
             const connectResult = await wallet?.features?.[
               'standard:connect'
             ]?.connect?.({
               silent: true
             });
+
             const connectedSuiAccounts = connectResult?.accounts?.filter?.(
               (account) =>
                 account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
             );
+
             const selectedAccount = getSelectedAccount(
               connectedSuiAccounts,
               untrack(() => lastConnectedAccountAddress) as any
@@ -213,7 +218,7 @@ export function createWalletStore(
   });
 
   // temporary testing fn
-  async function connectWallet() {
+  async function connectWallet({ wallet: _wallet, accountAddress, silent = false }) {
     console.log('wallets: ', wallets);
     console.log('lastConnectedWalletName: ', lastConnectedWalletName);
     console.log(
@@ -296,7 +301,6 @@ export function createWalletStore(
     get isDisconnected() {
       return isDisconnected;
     },
-
     setConnectionStatus,
     setWalletConnected,
     setWalletDisconnected,
