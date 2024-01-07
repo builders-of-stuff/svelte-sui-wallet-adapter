@@ -35,4 +35,6 @@ export type StoreState = {
   isConnected: boolean;
   isConnecting: boolean;
   isDisconnected: boolean;
+  // temporary testing only
+  connectWallet: any;
 } & WalletActions;

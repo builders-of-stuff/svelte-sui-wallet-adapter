@@ -11,6 +11,7 @@ import {
 } from './wallet-tools.js';
 import type { StoreState, WalletConnectionStatus } from './wallet.type.js';
 import { untrack } from 'svelte';
+import { SUI_WALLET_NAME } from './wallet.constant.js';
 
 /**
  * Mostly ported logic from sui/sdk/dapp-kit/...WalletProvider.tsx
@@ -18,13 +19,21 @@ import { untrack } from 'svelte';
  * @TODO Add support for persistance (localStorage?)
  * @TODO useUnsafeBurnerWallet
  */
-export function createWalletStore({
-  wallets: _wallets = [],
-  // storage = localStorage,
-  // storageKey = DEFAULT_STORAGE_KEY,
-  // enableUnsafeBurner = false,
-  autoConnect = false
-}): StoreState {
+export function createWalletStore(
+  {
+    wallets: _wallets = [],
+    // storage = localStorage,
+    // storageKey = DEFAULT_STORAGE_KEY,
+    // enableUnsafeBurner = false,
+    autoConnect = false
+  } = {
+    wallets: getRegisteredWallets([SUI_WALLET_NAME]),
+    // storage: localStorage,
+    // storageKey: DEFAULT_STORAGE_KEY,
+    // enableUnsafeBurner: false,
+    autoConnect: false
+  }
+): StoreState {
   /**
    * State
    */
@@ -100,106 +109,155 @@ export function createWalletStore({
   /**
    * Effects
    */
-  // useWalletsChanged
-  $effect(() => {
-    const walletsApi = getWallets();
+  $effect.root(() => {
+    // useWalletsChanged
+    $effect(() => {
+      const walletsApi = getWallets();
 
-    const unsubscribeFromRegister = walletsApi.on('register', () => {
-      setWalletRegistered(getRegisteredWallets());
+      const unsubscribeFromRegister = walletsApi.on('register', () => {
+        setWalletRegistered(getRegisteredWallets());
+      });
+
+      const unsubscribeFromUnregister = walletsApi.on(
+        'unregister',
+        (unregisteredWallet) => {
+          setWalletUnregistered(getRegisteredWallets(), unregisteredWallet);
+        }
+      );
+
+      return () => {
+        unsubscribeFromRegister();
+        unsubscribeFromUnregister();
+      };
     });
 
-    const unsubscribeFromUnregister = walletsApi.on(
-      'unregister',
-      (unregisteredWallet) => {
-        setWalletUnregistered(getRegisteredWallets(), unregisteredWallet);
-      }
-    );
-
-    return () => {
-      unsubscribeFromRegister();
-      unsubscribeFromUnregister();
-    };
-  });
-
-  // useWalletPropertiesChanged
-  $effect(() => {
-    const unsubscribeFromEvents = currentWallet?.features['standard:events'].on(
-      'change',
-      ({ accounts }) => {
-        // TODO: We should handle features changing that might make the list of wallets
-        // or even the current wallet incompatible with the dApp.
-        if (accounts) {
-          updateWalletAccounts(accounts);
+    // useWalletPropertiesChanged
+    $effect(() => {
+      const unsubscribeFromEvents = currentWallet?.features['standard:events'].on(
+        'change',
+        ({ accounts }) => {
+          // TODO: We should handle features changing that might make the list of wallets
+          // or even the current wallet incompatible with the dApp.
+          if (accounts) {
+            updateWalletAccounts(accounts);
+          }
         }
-      }
-    );
+      );
 
-    return () => {
-      unsubscribeFromEvents?.();
-    };
-  });
+      return () => {
+        unsubscribeFromEvents?.();
+      };
+    });
 
-  // useUnsafeBurnerWallet (TODO)
+    // useUnsafeBurnerWallet (TODO)
 
-  /**
-   * useAutoConnectWallet
-   *
-   * Original implementation returns 'disabled' | 'idle' | 'attempted', but does not seem to be used anywhere.
-   * This implementation currently only auto-connects, no use of the return value.
-   */
-  $effect(() => {
-    async function queryFn() {
-      if (!autoConnectEnabled) {
-        return 'disabled';
-      }
+    /**
+     * useAutoConnectWallet
+     *
+     * Original implementation returns 'disabled' | 'idle' | 'attempted', but does not seem to be used anywhere.
+     * This implementation currently only auto-connects, no use of the return value.
+     */
+    $effect(() => {
+      async function queryFn() {
+        if (!autoConnectEnabled) {
+          return 'disabled';
+        }
 
-      if (
-        !untrack(() => lastConnectedWalletName) ||
-        !untrack(() => lastConnectedAccountAddress) ||
-        untrack(() => isConnected)
-      ) {
+        if (
+          !untrack(() => lastConnectedWalletName) ||
+          !untrack(() => lastConnectedAccountAddress) ||
+          untrack(() => isConnected)
+        ) {
+          return 'attempted';
+        }
+
+        const wallet = untrack(() => wallets)?.find?.(
+          (wallet) =>
+            getWalletUniqueIdentifier(wallet) === untrack(() => lastConnectedWalletName)
+        ) as any;
+
+        if (wallet) {
+          try {
+            setConnectionStatus('connecting');
+            const connectResult = await wallet?.features?.[
+              'standard:connect'
+            ]?.connect?.({
+              silent: true
+            });
+            const connectedSuiAccounts = connectResult?.accounts?.filter?.(
+              (account) =>
+                account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
+            );
+            const selectedAccount = getSelectedAccount(
+              connectedSuiAccounts,
+              untrack(() => lastConnectedAccountAddress) as any
+            );
+
+            setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
+
+            // I don't know what this is for...
+            return { accounts: connectedSuiAccounts };
+          } catch (error) {
+            setConnectionStatus('disconnected');
+            throw error;
+          }
+        }
+
         return 'attempted';
       }
 
-      const wallet = untrack(() => wallets)?.find?.(
-        (wallet) =>
-          getWalletUniqueIdentifier(wallet) === untrack(() => lastConnectedWalletName)
-      ) as any;
-
-      if (wallet) {
-        try {
-          setConnectionStatus('connecting');
-          const connectResult = await wallet?.features?.['standard:connect']?.connect?.(
-            {
-              silent: true
-            }
-          );
-          const connectedSuiAccounts = connectResult?.accounts?.filter?.(
-            (account) =>
-              account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
-          );
-          const selectedAccount = getSelectedAccount(
-            connectedSuiAccounts,
-            untrack(() => lastConnectedAccountAddress) as any
-          );
-
-          setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
-
-          // I don't know what this is for...
-          return { accounts: connectedSuiAccounts };
-        } catch (error) {
-          setConnectionStatus('disconnected');
-          throw error;
-        }
+      if (autoConnectEnabled) {
+        queryFn();
       }
-
-      return 'attempted';
-    }
-
-    if (autoConnectEnabled) {
-      queryFn();
-    }
+    });
   });
+
+  // temporary testing fn
+  async function connectWallet() {
+    console.log('wallets: ', wallets);
+    console.log('lastConnectedWalletName: ', lastConnectedWalletName);
+    console.log(
+      'getWalletUniqueIdentifier(wallet): ',
+      getWalletUniqueIdentifier(wallets[0])
+    );
+
+    // const wallet = wallets?.find?.(
+    //   (wallet) => getWalletUniqueIdentifier(wallet) === lastConnectedWalletName
+    // ) as any;
+    const wallet = wallets?.find?.(Boolean) as any;
+
+    console.log('wallet: ', wallet);
+
+    if (wallet) {
+      console.log('yes');
+      try {
+        setConnectionStatus('connecting');
+        const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
+          silent: true
+        });
+
+        console.log('connectResult: ', connectResult);
+        const connectedSuiAccounts = connectResult?.accounts?.filter?.(
+          (account) =>
+            account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
+        );
+        const selectedAccount = getSelectedAccount(
+          connectedSuiAccounts,
+          lastConnectedAccountAddress as any
+        );
+
+        console.log('selectedAccount: ', selectedAccount);
+
+        setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
+
+        // I don't know what this is for...
+        return { accounts: connectedSuiAccounts };
+      } catch (error) {
+        setConnectionStatus('disconnected');
+        throw error;
+      }
+    }
+  }
 
   /**
    * Return
@@ -245,8 +303,9 @@ export function createWalletStore({
     setAccountSwitched,
     setWalletRegistered,
     setWalletUnregistered,
-    updateWalletAccounts
+    updateWalletAccounts,
+    connectWallet
   };
 }
 
-export const walletStore = createWalletStore({});
+export const walletStore = createWalletStore();

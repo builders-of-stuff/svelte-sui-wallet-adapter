@@ -9,7 +9,7 @@
     MinimallyRequiredFeatures
   } from '@mysten/wallet-standard';
   import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
-  import { getRegisteredWallets, createWalletStore } from '$lib/index.js';
+  import { getRegisteredWallets, walletStore } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
@@ -31,16 +31,17 @@
    */
   const suiWallets = getRegisteredWallets();
 
-  suiWallets.forEach((wallet) => {
-    console.log('wallet: ', wallet.name);
-  });
+  // suiWallets.forEach((wallet) => {
+  //   console.log('wallet: ', wallet.name);
+  // });
 
   /**
    * walletStore.ts
    */
-  const walletStore = createWalletStore();
 
-  console.log('walletStore: ', walletStore);
+  // console.log('walletStore: ', walletStore);
+
+  walletStore.connectWallet();
 
   /**
    * Playground
@@ -56,7 +57,7 @@
   onMount(async () => {
     let response = (await makeSuiCall()) as any;
 
-    console.log('response: ', response);
+    // console.log('response: ', response);
   });
 </script>
 
