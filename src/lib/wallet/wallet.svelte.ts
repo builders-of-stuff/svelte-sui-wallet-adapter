@@ -160,56 +160,39 @@ export function createWalletStore(
      * This implementation currently only auto-connects, no use of the return value.
      */
     $effect(() => {
-      async function queryFn() {
-        if (!autoConnectEnabled) {
-          return 'disabled';
-        }
+      const queryFn = untrack(
+        () =>
+          async function () {
+            if (!autoConnectEnabled) {
+              return 'disabled';
+            }
 
-        if (
-          !untrack(() => lastConnectedWalletName) ||
-          !untrack(() => lastConnectedAccountAddress) ||
-          untrack(() => isConnected)
-        ) {
-          return 'attempted';
-        }
+            if (
+              !lastConnectedWalletName ||
+              !lastConnectedAccountAddress ||
+              isConnected
+            ) {
+              return 'attempted';
+            }
 
-        const wallet = untrack(() => wallets)?.find?.(
-          (wallet) =>
-            getWalletUniqueIdentifier(wallet) === untrack(() => lastConnectedWalletName)
-        ) as any;
+            const wallet = untrack(() => wallets)?.find?.(
+              (wallet) =>
+                getWalletUniqueIdentifier(wallet) ===
+                untrack(() => lastConnectedWalletName)
+            ) as any;
+            // const wallet = wallets?.find?.(Boolean) as any;
 
-        if (wallet) {
-          try {
-            setConnectionStatus('connecting');
+            if (wallet) {
+              await connectWallet({
+                wallet,
+                accountAddress: lastConnectedAccountAddress,
+                silent: false
+              });
+            }
 
-            const connectResult = await wallet?.features?.[
-              'standard:connect'
-            ]?.connect?.({
-              silent: true
-            });
-
-            const connectedSuiAccounts = connectResult?.accounts?.filter?.(
-              (account) =>
-                account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
-            );
-
-            const selectedAccount = getSelectedAccount(
-              connectedSuiAccounts,
-              untrack(() => lastConnectedAccountAddress) as any
-            );
-
-            setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
-
-            // I don't know what this is for...
-            return { accounts: connectedSuiAccounts };
-          } catch (error) {
-            setConnectionStatus('disconnected');
-            throw error;
+            return 'attempted';
           }
-        }
-
-        return 'attempted';
-      }
+      );
 
       if (autoConnectEnabled) {
         queryFn();
@@ -217,50 +200,36 @@ export function createWalletStore(
     });
   });
 
-  // temporary testing fn
-  async function connectWallet({ wallet: _wallet, accountAddress, silent = false }) {
-    console.log('wallets: ', wallets);
-    console.log('lastConnectedWalletName: ', lastConnectedWalletName);
-    console.log(
-      'getWalletUniqueIdentifier(wallet): ',
-      getWalletUniqueIdentifier(wallets[0])
-    );
+  // temporary testing fn (useAutoConnectWallet.ts ->  useConnectWallet.ts)
+  async function connectWallet({
+    wallet = wallets?.[0],
+    accountAddress = lastConnectedAccountAddress,
+    silent = false
+  } = {}) {
+    try {
+      setConnectionStatus('connecting');
+      const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
+        // pops up connect modal
+        silent
+      });
 
-    // const wallet = wallets?.find?.(
-    //   (wallet) => getWalletUniqueIdentifier(wallet) === lastConnectedWalletName
-    // ) as any;
-    const wallet = wallets?.find?.(Boolean) as any;
+      const connectedSuiAccounts = connectResult?.accounts?.filter?.(
+        (account) =>
+          account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
+      );
 
-    console.log('wallet: ', wallet);
+      const selectedAccount = getSelectedAccount(
+        connectedSuiAccounts,
+        accountAddress || (lastConnectedAccountAddress as any)
+      );
 
-    if (wallet) {
-      console.log('yes');
-      try {
-        setConnectionStatus('connecting');
-        const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
-          silent: true
-        });
+      setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
 
-        console.log('connectResult: ', connectResult);
-        const connectedSuiAccounts = connectResult?.accounts?.filter?.(
-          (account) =>
-            account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
-        );
-        const selectedAccount = getSelectedAccount(
-          connectedSuiAccounts,
-          lastConnectedAccountAddress as any
-        );
-
-        console.log('selectedAccount: ', selectedAccount);
-
-        setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
-
-        // I don't know what this is for...
-        return { accounts: connectedSuiAccounts };
-      } catch (error) {
-        setConnectionStatus('disconnected');
-        throw error;
-      }
+      // I don't know what this is for...
+      return { accounts: connectedSuiAccounts };
+    } catch (error) {
+      setConnectionStatus('disconnected');
+      throw error;
     }
   }
 

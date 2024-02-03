@@ -41,11 +41,15 @@
 
   // console.log('walletStore: ', walletStore);
 
-  walletStore.connectWallet();
+  // walletStore.connectWallet();
 
   /**
    * Playground
    */
+  const handleConnectWallet = () => {
+    walletStore.connectWallet();
+  };
+
   const makeSuiCall = async () => {
     let balance = await suiClient.getCoins({
       owner: MY_ADDRESS
@@ -62,3 +66,5 @@
 </script>
 
 <h1>Welcome to SvelteKit</h1>
+
+<button on:click={handleConnectWallet}>Connect Wallet</button>
