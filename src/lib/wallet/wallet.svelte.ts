@@ -17,9 +17,13 @@ import { SUI_WALLET_NAME } from './wallet.constant.js';
  * Mostly ported logic from sui/sdk/dapp-kit/...WalletProvider.tsx
  *
  * @TODO Add support for persistance (localStorage?)
- * @TODO useUnsafeBurnerWallet
+ * @TODO useUnsafeBurnerWa
+ *
+ * @TODO ConnectButton
+ * @TODO useSwitchAccount
+ * @TODO signers
  */
-export function createWalletStore(
+export function createWalletState(
   {
     wallets: _wallets = [],
     // storage = localStorage,
@@ -175,10 +179,8 @@ export function createWalletStore(
               return 'attempted';
             }
 
-            const wallet = untrack(() => wallets)?.find?.(
-              (wallet) =>
-                getWalletUniqueIdentifier(wallet) ===
-                untrack(() => lastConnectedWalletName)
+            const wallet = wallets?.find?.(
+              (wallet) => getWalletUniqueIdentifier(wallet) === lastConnectedWalletName
             ) as any;
             // const wallet = wallets?.find?.(Boolean) as any;
 
@@ -284,4 +286,4 @@ export function createWalletStore(
   };
 }
 
-export const walletStore = createWalletStore();
+export const walletState = createWalletState();

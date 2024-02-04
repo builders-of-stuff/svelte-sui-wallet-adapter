@@ -9,7 +9,7 @@
     MinimallyRequiredFeatures
   } from '@mysten/wallet-standard';
   import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
-  import { getRegisteredWallets, walletStore } from '$lib/index.js';
+  import { getRegisteredWallets, walletState } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
@@ -29,65 +29,65 @@
   /**
    * getRegisteredWallets
    */
-  const suiWallets = getRegisteredWallets();
+  // const suiWallets = getRegisteredWallets();
 
   // suiWallets.forEach((wallet) => {
   //   console.log('wallet: ', wallet.name);
   // });
 
   /**
-   * walletStore.ts
+   * walletState.ts
    */
 
-  // console.log('walletStore: ', walletStore);
+  // console.log('walletState: ', walletState);
 
-  // walletStore.connectWallet();
+  // walletState.connectWallet();
 
   /**
    * Playground
    */
   const handleConnectWallet = async () => {
-    await walletStore.connectWallet();
+    await walletState.connectWallet();
   };
 
   const handleWallets = () => {
-    let Wallets = walletStore.wallets;
+    let Wallets = walletState.wallets;
     console.log('Wallets: ', Wallets);
   };
   const handleAccounts = () => {
-    let Accounts = walletStore.accounts;
+    let Accounts = walletState.accounts;
     console.log('Accounts: ', Accounts);
   };
   const handleCurrentWallet = () => {
-    let CurrentWallet = walletStore.currentWallet;
+    let CurrentWallet = walletState.currentWallet;
     console.log('CurrentWallet: ', CurrentWallet);
   };
   const handleCurrentAccount = () => {
-    let CurrentAccount = walletStore.currentAccount;
+    let CurrentAccount = walletState.currentAccount;
     console.log('CurrentAccount: ', CurrentAccount);
   };
   const handleLastConnectedAccountAddress = () => {
-    let LastConnectedAccountAddress = walletStore.lastConnectedAccountAddress;
+    let LastConnectedAccountAddress = walletState.lastConnectedAccountAddress;
     console.log('LastConnectedAccountAddress: ', LastConnectedAccountAddress);
   };
   const handleLastConnectedWalletName = () => {
-    let LastConnectedWalletName = walletStore.lastConnectedWalletName;
+    let LastConnectedWalletName = walletState.lastConnectedWalletName;
     console.log('LastConnectedWalletName: ', LastConnectedWalletName);
   };
   const handleConnectionStatus = () => {
-    let ConnectionStatus = walletStore.connectionStatus;
+    let ConnectionStatus = walletState.connectionStatus;
     console.log('ConnectionStatus: ', ConnectionStatus);
   };
   const handleIsConnected = () => {
-    let IsConnected = walletStore.isConnected;
+    let IsConnected = walletState.isConnected;
     console.log('IsConnected: ', IsConnected);
   };
   const handleIsConnecting = () => {
-    let IsConnecting = walletStore.isConnecting;
+    let IsConnecting = walletState.isConnecting;
     console.log('IsConnecting: ', IsConnecting);
   };
   const handleIsDisconnected = () => {
-    let IsDisconnected = walletStore.isDisconnected;
+    let IsDisconnected = walletState.isDisconnected;
     console.log('IsDisconnected: ', IsDisconnected);
   };
 
@@ -121,7 +121,6 @@
   {/if}
 {/snippet}
 
-<!-- Just trying out snippets -->
 {#snippet accountDisplay(account)}
   {#if !account}
     <p>No account</p>
@@ -137,7 +136,9 @@
   {/if}
 {/snippet}
 
-<h1>Actions (console logged)</h1>
+<a href="/two">Page two</a>
+
+<h2>Actions (console logged)</h2>
 <button on:click={handleConnectWallet}>Connect Wallet</button>
 <button on:click={handleWallets}>Wallets</button>
 <button on:click={handleAccounts}>Accounts</button>
@@ -153,35 +154,35 @@
 <button on:click={handleIsDisconnected}>Is Disconnected</button>
 
 <div>
+  <h2>Current wallet</h2>
+  {@render walletDisplay(walletState.currentWallet)}
+</div>
+
+<div>
+  <h2>Current account</h2>
+  {@render accountDisplay(walletState.currentAccount)}
+</div>
+
+<h2>Misc. state</h2>
+<p>Last Connected Account Address: {walletState.lastConnectedAccountAddress}</p>
+<p>Last Connected Wallet Name: {walletState.lastConnectedWalletName}</p>
+<p>Connection Status: {walletState.connectionStatus}</p>
+<p>Is Connected: {walletState.isConnected}</p>
+<p>Is Connecting: {walletState.isConnecting}</p>
+<p>Is Disconnected: {walletState.isDisconnected}</p>
+
+<div>
   <h2>Wallets</h2>
-  {#each walletStore.wallets as wallet}
+  {#each walletState.wallets as wallet}
     {@render walletDisplay(wallet)}
     <hr />
   {/each}
 </div>
 
 <div>
-  <h2>Current wallet</h2>
-  {@render walletDisplay(walletStore.currentWallet)}
-</div>
-
-<div>
   <h2>Accounts</h2>
-  {#each walletStore.accounts as account}
+  {#each walletState.accounts as account}
     {@render accountDisplay(account)}
     <hr />
   {/each}
 </div>
-
-<div>
-  <h2>Current account</h2>
-  {@render accountDisplay(walletStore.currentAccount)}
-</div>
-
-<h2>Misc. state</h2>
-<p>Last Connected Account Address: {walletStore.lastConnectedAccountAddress}</p>
-<p>Last Connected Wallet Name: {walletStore.lastConnectedWalletName}</p>
-<p>Connection Status: {walletStore.connectionStatus}</p>
-<p>Is Connected: {walletStore.isConnected}</p>
-<p>Is Connecting: {walletStore.isConnecting}</p>
-<p>Is Disconnected: {walletStore.isDisconnected}</p>
