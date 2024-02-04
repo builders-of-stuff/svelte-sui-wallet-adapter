@@ -206,6 +206,8 @@ export function createWalletStore(
     accountAddress = lastConnectedAccountAddress,
     silent = false
   } = {}) {
+    console.log('connecting: ', wallet, accountAddress, silent);
+
     try {
       setConnectionStatus('connecting');
       const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
@@ -222,6 +224,7 @@ export function createWalletStore(
         connectedSuiAccounts,
         accountAddress || (lastConnectedAccountAddress as any)
       );
+      console.log('selectedAccount: ', selectedAccount);
 
       setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
 
