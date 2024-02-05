@@ -4,7 +4,11 @@
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
-  "repository": "https://github.com/builders-of-stuff/svelte-sui-wallet-adapter",
+  "homepage": "https://github.com/builders-of-stuff/svelte-sui-wallet-adapter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/builders-of-stuff/svelte-sui-wallet-adapter"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && npm run package",

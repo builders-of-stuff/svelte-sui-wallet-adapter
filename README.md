@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/svelte-sui-wallet-adapter.svg)](https://www.npmjs.com/package/@builders-of-stuff/svelte-sui-wallet-adapter)
+
 # create-svelte
 
 Everything you need to build a Svelte library, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
