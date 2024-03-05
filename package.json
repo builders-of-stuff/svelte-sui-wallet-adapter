@@ -1,6 +1,6 @@
 {
   "name": "@builders-of-stuff/svelte-sui-wallet-adapter",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -35,7 +35,7 @@
     "!dist/**/*.spec.*"
   ],
   "peerDependencies": {
-    "svelte": "^4.0.0"
+    "svelte": "^5.0.0"
   },
   "dependencies": {
     "@mysten/sui.js": "0.49.1",

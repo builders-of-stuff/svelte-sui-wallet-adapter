@@ -1,3 +1,62 @@
+## Use
+
+`npm install @builders-of-stuff/svelte-sui-wallet-adapter`
+
+```
+<script lang="ts">
+import { walletState } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+
+const handleConnectWallet = async () => {
+  await walletState.connectWallet();
+};
+
+const handleDisconnectWallet = async () => {
+  await walletState.disconnectWallet();
+};
+</script>
+
+<button on:click={handleConnectWallet}>Connect Wallet</button>
+<button on:click={handleDisconnectWallet}>Disconnect Wallet</button>
+```
+
+## Types
+
+```
+export type WalletActions = {
+  setAccountSwitched: (selectedAccount: WalletAccount) => void;
+  setConnectionStatus: (connectionStatus: WalletConnectionStatus) => void;
+  setWalletConnected: (
+    wallet: WalletWithRequiredFeatures,
+    connectedAccounts: readonly WalletAccount[],
+    selectedAccount: WalletAccount | null
+  ) => void;
+  updateWalletAccounts: (accounts: readonly WalletAccount[]) => void;
+  setWalletDisconnected: () => void;
+  setWalletRegistered: (updatedWallets: WalletWithRequiredFeatures[]) => void;
+  setWalletUnregistered: (
+    updatedWallets: WalletWithRequiredFeatures[],
+    unregisteredWallet: Wallet
+  ) => void;
+};
+
+export type StoreState = {
+  autoConnectEnabled: boolean;
+  wallets: WalletWithRequiredFeatures[];
+  accounts: readonly WalletAccount[];
+  currentWallet: WalletWithRequiredFeatures | null;
+  currentAccount: WalletAccount | null;
+  lastConnectedAccountAddress: string | null;
+  lastConnectedWalletName: string | null;
+  connectionStatus: WalletConnectionStatus;
+  isConnected: boolean;
+  isConnecting: boolean;
+  isDisconnected: boolean;
+  // temporary testing only?
+  connectWallet: any;
+  disconnectWallet: any;
+} & WalletActions;
+```
+
 ## Developing
 
 Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
@@ -10,22 +69,6 @@ npm run dev -- --open
 ```
 
 Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
-
-## Building
-
-To build your library:
-
-```bash
-npm run package
-```
-
-To create a production version of your showcase app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
 
