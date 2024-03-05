@@ -14,7 +14,7 @@ import type { StoreState, WalletConnectionStatus } from './wallet.type.js';
 import { SUI_WALLET_NAME } from './wallet.constant.js';
 
 /**
- * Mostly ported logic from sui/sdk/dapp-kit/...WalletProvider.tsx
+ * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
  *
  * @TODO Add support for persistance (localStorage?)
  * @TODO useUnsafeBurnerWa
@@ -58,7 +58,7 @@ export function createWalletState(
   const isDisconnected = $derived(connectionStatus === 'disconnected');
 
   /**
-   * Update functions
+   * Wallet state functions
    */
   const setConnectionStatus = (status: WalletConnectionStatus) => {
     connectionStatus = status;
@@ -109,6 +109,65 @@ export function createWalletState(
         )) ||
       updatedAccounts?.[0];
   };
+
+  /**
+   * Utility functions
+   */
+  // temporary testing fn (useAutoConnectWallet.ts -> useConnectWallet.ts)
+  async function connectWallet({
+    wallet = wallets?.[0],
+    accountAddress = lastConnectedAccountAddress,
+    silent = false
+  } = {}) {
+    console.log('connecting: ', wallet, accountAddress, silent);
+
+    try {
+      setConnectionStatus('connecting');
+      const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
+        // pops up connect modal
+        silent
+      });
+
+      const connectedSuiAccounts = connectResult?.accounts?.filter?.(
+        (account) =>
+          account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
+      );
+
+      const selectedAccount = getSelectedAccount(
+        connectedSuiAccounts,
+        accountAddress || (lastConnectedAccountAddress as any)
+      );
+      console.log('selectedAccount: ', selectedAccount);
+
+      setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
+
+      // I don't know what this is for...
+      return { accounts: connectedSuiAccounts };
+    } catch (error) {
+      setConnectionStatus('disconnected');
+      throw error;
+    }
+  }
+
+  async function disconnectWallet() {
+    if (!currentWallet) {
+      throw new Error('No wallet is connected');
+    }
+
+    try {
+      // Wallets aren't required to implement the disconnect feature, so we'll
+      // optionally call the disconnect feature if it exists and reset the UI
+      // state on the frontend at a minimum.
+      await currentWallet.features['standard:disconnect']?.disconnect();
+    } catch (error) {
+      console.error(
+        'Failed to disconnect the application from the current wallet.',
+        error
+      );
+    }
+
+    setWalletDisconnected();
+  }
 
   /**
    * Effects
@@ -202,42 +261,6 @@ export function createWalletState(
     });
   });
 
-  // temporary testing fn (useAutoConnectWallet.ts ->  useConnectWallet.ts)
-  async function connectWallet({
-    wallet = wallets?.[0],
-    accountAddress = lastConnectedAccountAddress,
-    silent = false
-  } = {}) {
-    console.log('connecting: ', wallet, accountAddress, silent);
-
-    try {
-      setConnectionStatus('connecting');
-      const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
-        // pops up connect modal
-        silent
-      });
-
-      const connectedSuiAccounts = connectResult?.accounts?.filter?.(
-        (account) =>
-          account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
-      );
-
-      const selectedAccount = getSelectedAccount(
-        connectedSuiAccounts,
-        accountAddress || (lastConnectedAccountAddress as any)
-      );
-      console.log('selectedAccount: ', selectedAccount);
-
-      setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
-
-      // I don't know what this is for...
-      return { accounts: connectedSuiAccounts };
-    } catch (error) {
-      setConnectionStatus('disconnected');
-      throw error;
-    }
-  }
-
   /**
    * Return
    */
@@ -282,7 +305,8 @@ export function createWalletState(
     setWalletRegistered,
     setWalletUnregistered,
     updateWalletAccounts,
-    connectWallet
+    connectWallet,
+    disconnectWallet
   };
 }
 

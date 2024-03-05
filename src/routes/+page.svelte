@@ -14,8 +14,11 @@
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
 
+  // const MY_ADDRESS =
+  //   '0xe8468f320cf248052e931b3d0214e3f48049e86e28882b58579406cca7a51e86';
+
   const MY_ADDRESS =
-    '0xe8468f320cf248052e931b3d0214e3f48049e86e28882b58579406cca7a51e86';
+    '0xeb666809d9917116673903de0c7641f42fd02ffea73dc9151d63122e308ba05c';
 
   /**
    * SuiClientProvider
@@ -48,6 +51,10 @@
    */
   const handleConnectWallet = async () => {
     await walletState.connectWallet();
+  };
+
+  const handleDisconnectWallet = async () => {
+    await walletState.disconnectWallet();
   };
 
   const handleWallets = () => {
@@ -140,6 +147,7 @@
 
 <h2>Actions (console logged)</h2>
 <button on:click={handleConnectWallet}>Connect Wallet</button>
+<button on:click={handleDisconnectWallet}>Disconnect Wallet</button>
 <button on:click={handleWallets}>Wallets</button>
 <button on:click={handleAccounts}>Accounts</button>
 <button on:click={handleCurrentWallet}>Current Wallet</button>
