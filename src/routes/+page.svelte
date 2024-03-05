@@ -145,9 +145,15 @@
 
 <a href="/two">Page two</a>
 
-<h2>Actions (console logged)</h2>
+<br />
+<br />
+
 <button on:click={handleConnectWallet}>Connect Wallet</button>
 <button on:click={handleDisconnectWallet}>Disconnect Wallet</button>
+
+<br />
+<br />
+
 <button on:click={handleWallets}>Wallets</button>
 <button on:click={handleAccounts}>Accounts</button>
 <button on:click={handleCurrentWallet}>Current Wallet</button>
