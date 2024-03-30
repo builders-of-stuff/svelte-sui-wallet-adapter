@@ -9,7 +9,7 @@
     MinimallyRequiredFeatures
   } from '@mysten/wallet-standard';
   import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
-  import { getRegisteredWallets, walletStore } from '$lib/index.js';
+  import { getRegisteredWallets, walletAdapter } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
@@ -39,62 +39,62 @@
   // });
 
   /**
-   * walletStore.ts
+   * walletAdapter.ts
    */
 
-  // console.log('walletStore: ', walletStore);
+  // console.log('walletAdapter: ', walletAdapter);
 
-  // walletStore.connectWallet();
+  // walletAdapter.connectWallet();
 
   /**
    * Playground
    */
   const handleConnectWallet = async () => {
-    await walletStore.connectWallet();
+    await walletAdapter.connectWallet();
   };
 
   const handleDisconnectWallet = async () => {
-    await walletStore.disconnectWallet();
+    await walletAdapter.disconnectWallet();
   };
 
   const handleWallets = () => {
-    let Wallets = walletStore.wallets;
+    let Wallets = walletAdapter.wallets;
     console.log('Wallets: ', Wallets);
   };
   const handleAccounts = () => {
-    let Accounts = walletStore.accounts;
+    let Accounts = walletAdapter.accounts;
     console.log('Accounts: ', Accounts);
   };
   const handleCurrentWallet = () => {
-    let CurrentWallet = walletStore.currentWallet;
+    let CurrentWallet = walletAdapter.currentWallet;
     console.log('CurrentWallet: ', CurrentWallet);
   };
   const handleCurrentAccount = () => {
-    let CurrentAccount = walletStore.currentAccount;
+    let CurrentAccount = walletAdapter.currentAccount;
     console.log('CurrentAccount: ', CurrentAccount);
   };
   const handleLastConnectedAccountAddress = () => {
-    let LastConnectedAccountAddress = walletStore.lastConnectedAccountAddress;
+    let LastConnectedAccountAddress = walletAdapter.lastConnectedAccountAddress;
     console.log('LastConnectedAccountAddress: ', LastConnectedAccountAddress);
   };
   const handleLastConnectedWalletName = () => {
-    let LastConnectedWalletName = walletStore.lastConnectedWalletName;
+    let LastConnectedWalletName = walletAdapter.lastConnectedWalletName;
     console.log('LastConnectedWalletName: ', LastConnectedWalletName);
   };
   const handleConnectionStatus = () => {
-    let ConnectionStatus = walletStore.connectionStatus;
+    let ConnectionStatus = walletAdapter.connectionStatus;
     console.log('ConnectionStatus: ', ConnectionStatus);
   };
   const handleIsConnected = () => {
-    let IsConnected = walletStore.isConnected;
+    let IsConnected = walletAdapter.isConnected;
     console.log('IsConnected: ', IsConnected);
   };
   const handleIsConnecting = () => {
-    let IsConnecting = walletStore.isConnecting;
+    let IsConnecting = walletAdapter.isConnecting;
     console.log('IsConnecting: ', IsConnecting);
   };
   const handleIsDisconnected = () => {
-    let IsDisconnected = walletStore.isDisconnected;
+    let IsDisconnected = walletAdapter.isDisconnected;
     console.log('IsDisconnected: ', IsDisconnected);
   };
 
@@ -169,25 +169,25 @@
 
 <div>
   <h2>Current wallet</h2>
-  {@render walletDisplay(walletStore.currentWallet)}
+  {@render walletDisplay(walletAdapter.currentWallet)}
 </div>
 
 <div>
   <h2>Current account</h2>
-  {@render accountDisplay(walletStore.currentAccount)}
+  {@render accountDisplay(walletAdapter.currentAccount)}
 </div>
 
 <h2>Misc. state</h2>
-<p>Last Connected Account Address: {walletStore.lastConnectedAccountAddress}</p>
-<p>Last Connected Wallet Name: {walletStore.lastConnectedWalletName}</p>
-<p>Connection Status: {walletStore.connectionStatus}</p>
-<p>Is Connected: {walletStore.isConnected}</p>
-<p>Is Connecting: {walletStore.isConnecting}</p>
-<p>Is Disconnected: {walletStore.isDisconnected}</p>
+<p>Last Connected Account Address: {walletAdapter.lastConnectedAccountAddress}</p>
+<p>Last Connected Wallet Name: {walletAdapter.lastConnectedWalletName}</p>
+<p>Connection Status: {walletAdapter.connectionStatus}</p>
+<p>Is Connected: {walletAdapter.isConnected}</p>
+<p>Is Connecting: {walletAdapter.isConnecting}</p>
+<p>Is Disconnected: {walletAdapter.isDisconnected}</p>
 
 <div>
   <h2>Wallets</h2>
-  {#each walletStore.wallets as wallet}
+  {#each walletAdapter.wallets as wallet}
     {@render walletDisplay(wallet)}
     <hr />
   {/each}
@@ -195,7 +195,7 @@
 
 <div>
   <h2>Accounts</h2>
-  {#each walletStore.accounts as account}
+  {#each walletAdapter.accounts as account}
     {@render accountDisplay(account)}
     <hr />
   {/each}

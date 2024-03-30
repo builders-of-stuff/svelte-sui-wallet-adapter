@@ -9,9 +9,9 @@ import {
   getRegisteredWallets,
   getSelectedAccount,
   getWalletUniqueIdentifier
-} from './wallet-tools.js';
-import type { StoreState, WalletConnectionStatus } from './wallet.type.js';
-import { SUI_WALLET_NAME } from './wallet.constant.js';
+} from './wallet-adapter-tools.js';
+import type { WalletAdapter, WalletConnectionStatus } from './wallet-adapter.type.js';
+import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
 
 /**
  * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
@@ -23,7 +23,7 @@ import { SUI_WALLET_NAME } from './wallet.constant.js';
  * @TODO useSwitchAccount
  * @TODO signers
  */
-export function createWalletStore(
+export function createWalletAdapter(
   {
     wallets: _wallets = [],
     // storage = localStorage,
@@ -37,7 +37,7 @@ export function createWalletStore(
     // enableUnsafeBurner: false,
     autoConnect: false
   }
-): StoreState {
+): WalletAdapter {
   /**
    * State
    */
@@ -312,4 +312,4 @@ export function createWalletStore(
   };
 }
 
-export const walletStore = createWalletStore();
+export const walletAdapter = createWalletAdapter();

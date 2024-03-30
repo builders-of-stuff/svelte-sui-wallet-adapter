@@ -6,7 +6,10 @@ import type {
 } from '@mysten/wallet-standard';
 import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
 
-import { DEFAULT_REQUIRED_FEATURES, SUI_WALLET_NAME } from './wallet.constant.js';
+import {
+  DEFAULT_REQUIRED_FEATURES,
+  SUI_WALLET_NAME
+} from './wallet-adapter.constant.js';
 
 export const getRegisteredWallets = (
   preferredWallets: string[] = [SUI_WALLET_NAME]

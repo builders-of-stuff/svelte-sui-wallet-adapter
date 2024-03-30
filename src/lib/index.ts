@@ -1,2 +1,2 @@
 // Reexport your entry components here
-export * from './wallet/index.js';
+export * from './wallet-adapter/index.js';

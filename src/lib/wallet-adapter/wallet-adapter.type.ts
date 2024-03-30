@@ -6,7 +6,7 @@ import type {
 
 export type WalletConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
-export type WalletActions = {
+export type WalletAdapterActions = {
   setAccountSwitched: (selectedAccount: WalletAccount) => void;
   setConnectionStatus: (connectionStatus: WalletConnectionStatus) => void;
   setWalletConnected: (
@@ -23,7 +23,7 @@ export type WalletActions = {
   ) => void;
 };
 
-export type StoreState = {
+export type WalletAdapter = {
   autoConnectEnabled: boolean;
   wallets: WalletWithRequiredFeatures[];
   accounts: readonly WalletAccount[];
@@ -38,4 +38,4 @@ export type StoreState = {
   // temporary testing only?
   connectWallet: any;
   disconnectWallet: any;
-} & WalletActions;
+} & WalletAdapterActions;

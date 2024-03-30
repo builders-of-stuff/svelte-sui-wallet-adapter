@@ -4,14 +4,14 @@
 
 ```
 <script lang="ts">
-import { walletStore } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+import { walletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
 
 const handleConnectWallet = async () => {
-  await walletStore.connectWallet();
+  await walletAdapter.connectWallet();
 };
 
 const handleDisconnectWallet = async () => {
-  await walletStore.disconnectWallet();
+  await walletAdapter.disconnectWallet();
 };
 </script>
 
@@ -22,7 +22,7 @@ const handleDisconnectWallet = async () => {
 ## Types
 
 ```
-export type WalletActions = {
+export type WalletAdapterActions = {
   setAccountSwitched: (selectedAccount: WalletAccount) => void;
   setConnectionStatus: (connectionStatus: WalletConnectionStatus) => void;
   setWalletConnected: (
@@ -39,7 +39,7 @@ export type WalletActions = {
   ) => void;
 };
 
-export type StoreState = {
+export type WalletAdapter = {
   autoConnectEnabled: boolean;
   wallets: WalletWithRequiredFeatures[];
   accounts: readonly WalletAccount[];
@@ -54,7 +54,7 @@ export type StoreState = {
   // temporary testing only?
   connectWallet: any;
   disconnectWallet: any;
-} & WalletActions;
+} & WalletAdapterActions;
 ```
 
 ## Developing
