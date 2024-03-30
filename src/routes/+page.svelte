@@ -9,7 +9,7 @@
     MinimallyRequiredFeatures
   } from '@mysten/wallet-standard';
   import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
-  import { getRegisteredWallets, walletAdapter } from '$lib/index.js';
+  import { getRegisteredWallets, logWalletAdapterState, walletAdapter } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
@@ -150,6 +150,7 @@
 
 <button on:click={handleConnectWallet}>Connect Wallet</button>
 <button on:click={handleDisconnectWallet}>Disconnect Wallet</button>
+<button on:click={() => logWalletAdapterState(walletAdapter)}>Log adapter state</button>
 
 <br />
 <br />

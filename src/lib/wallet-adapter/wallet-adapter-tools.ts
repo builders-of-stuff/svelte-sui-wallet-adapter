@@ -54,3 +54,62 @@ export function getSelectedAccount(
 
   return connectedAccounts?.[0];
 }
+
+export const logWalletAdapterState = (walletAdapter) => {
+  const wallets = walletAdapter.wallets;
+  const accounts = walletAdapter.accounts;
+  const currentWallet = walletAdapter.currentWallet;
+  const currentAccount = walletAdapter.currentAccount;
+  const lastConnectedAccountAddress = walletAdapter.lastConnectedAccountAddress;
+  const lastConnectedWalletName = walletAdapter.lastConnectedWalletName;
+  const connectionStatus = walletAdapter.connectionStatus;
+  const isConnected = walletAdapter.isConnected;
+  const isConnecting = walletAdapter.isConnecting;
+  const isDisconnected = walletAdapter.isDisconnected;
+
+  console.log('');
+  console.log('--Wallets');
+  console.log(wallets);
+  wallets.forEach((wallet) => {
+    console.log(wallet.name);
+  });
+
+  console.log('');
+  console.log('--Accounts');
+  console.log(accounts);
+  accounts.forEach((account) => {
+    console.log(account.address);
+  });
+
+  console.log('');
+  console.log('--Current wallet');
+  console.log(currentWallet?.name);
+
+  console.log('');
+  console.log('--Current account');
+  console.log(currentAccount?.address);
+
+  console.log('');
+  console.log('--Last connected account address');
+  console.log(lastConnectedAccountAddress);
+
+  console.log('');
+  console.log('--Last connected wallet name');
+  console.log(lastConnectedWalletName);
+
+  console.log('');
+  console.log('--Connection status');
+  console.log(connectionStatus);
+
+  console.log('');
+  console.log('--Is connected');
+  console.log(isConnected);
+
+  console.log('');
+  console.log('--Is connecting');
+  console.log(isConnecting);
+
+  console.log('');
+  console.log('--Is disconnected');
+  console.log(isDisconnected);
+};
