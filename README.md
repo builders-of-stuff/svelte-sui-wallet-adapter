@@ -4,14 +4,14 @@
 
 ```
 <script lang="ts">
-import { walletState } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+import { walletStore } from '@builders-of-stuff/svelte-sui-wallet-adapter';
 
 const handleConnectWallet = async () => {
-  await walletState.connectWallet();
+  await walletStore.connectWallet();
 };
 
 const handleDisconnectWallet = async () => {
-  await walletState.disconnectWallet();
+  await walletStore.disconnectWallet();
 };
 </script>
 

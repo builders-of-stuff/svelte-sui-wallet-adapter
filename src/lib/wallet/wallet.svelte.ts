@@ -23,7 +23,7 @@ import { SUI_WALLET_NAME } from './wallet.constant.js';
  * @TODO useSwitchAccount
  * @TODO signers
  */
-export function createWalletState(
+export function createWalletStore(
   {
     wallets: _wallets = [],
     // storage = localStorage,
@@ -158,7 +158,9 @@ export function createWalletState(
       // Wallets aren't required to implement the disconnect feature, so we'll
       // optionally call the disconnect feature if it exists and reset the UI
       // state on the frontend at a minimum.
-      await currentWallet.features['standard:disconnect']?.disconnect();
+      await currentWallet.features['standard:disconnect']?.disconnect()?.then?.(() => {
+        setWalletDisconnected();
+      });
     } catch (error) {
       console.error(
         'Failed to disconnect the application from the current wallet.',
@@ -310,4 +312,4 @@ export function createWalletState(
   };
 }
 
-export const walletState = createWalletState();
+export const walletStore = createWalletStore();
