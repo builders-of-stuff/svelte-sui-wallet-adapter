@@ -1,9 +1,10 @@
+import { untrack } from 'svelte';
 import type {
   WalletAccount,
   WalletWithRequiredFeatures
 } from '@mysten/wallet-standard';
 import { getWallets } from '@mysten/wallet-standard';
-import { untrack } from 'svelte';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui.js/client';
 
 import {
   getRegisteredWallets,
@@ -30,8 +31,6 @@ import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
  *
  * @TODO ConnectButton
  * @TODO useSwitchAccount
- * @TODO signers
- * @TODO SuiClient
  */
 export function createWalletAdapter(
   {
@@ -39,18 +38,25 @@ export function createWalletAdapter(
     // storage = localStorage,
     // storageKey = DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner = false,
-    autoConnect = false
+    autoConnect = false,
+    rpcUrl = getFullnodeUrl('devnet')
   } = {
     wallets: getRegisteredWallets([SUI_WALLET_NAME]),
     // storage: localStorage,
     // storageKey: DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner: false,
-    autoConnect: false
+    autoConnect: false,
+    rpcUrl: getFullnodeUrl('devnet')
   }
 ): WalletAdapter {
   /**
    * State
    */
+  const suiClient = $state(
+    new SuiClient({
+      url: rpcUrl
+    })
+  );
   const autoConnectEnabled = $state(autoConnect);
   let wallets = $state(_wallets);
   let accounts = $state([] as WalletAccount[]);
@@ -224,43 +230,44 @@ export function createWalletAdapter(
       );
     }
 
-    // if (executeFromWallet) {
-    const walletFeature = currentWallet.features['sui:signAndExecuteTransactionBlock'];
+    if (executeFromWallet) {
+      const walletFeature =
+        currentWallet.features['sui:signAndExecuteTransactionBlock'];
+      if (!walletFeature) {
+        throw new Error(
+          "This wallet doesn't support the `signAndExecuteTransactionBlock` feature."
+        );
+      }
+
+      return walletFeature.signAndExecuteTransactionBlock({
+        ...signAndExecuteTransactionBlockArgs,
+        account: signerAccount,
+        chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0],
+        requestType: signAndExecuteTransactionBlockArgs.requestType,
+        options: signAndExecuteTransactionBlockArgs.options ?? {}
+      });
+    }
+
+    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
     if (!walletFeature) {
       throw new Error(
-        "This wallet doesn't support the `signAndExecuteTransactionBlock` feature."
+        "This wallet doesn't support the `signTransactionBlock` feature."
       );
     }
 
-    return walletFeature.signAndExecuteTransactionBlock({
-      ...signAndExecuteTransactionBlockArgs,
-      account: signerAccount,
-      chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0],
+    const { signature, transactionBlockBytes } =
+      await walletFeature.signTransactionBlock({
+        ...signAndExecuteTransactionBlockArgs,
+        account: signerAccount,
+        chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0]
+      });
+
+    return suiClient.executeTransactionBlock({
+      transactionBlock: transactionBlockBytes,
+      signature,
       requestType: signAndExecuteTransactionBlockArgs.requestType,
       options: signAndExecuteTransactionBlockArgs.options ?? {}
     });
-    // }
-
-    // const walletFeature = currentWallet.features['sui:signTransactionBlock'];
-    // if (!walletFeature) {
-    //   throw new Error(
-    //     "This wallet doesn't support the `signTransactionBlock` feature."
-    //   );
-    // }
-
-    // const { signature, transactionBlockBytes } =
-    //   await walletFeature.signTransactionBlock({
-    //     ...signAndExecuteTransactionBlockArgs,
-    //     account: signerAccount,
-    //     chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0]
-    //   });
-
-    // return client.executeTransactionBlock({
-    //   transactionBlock: transactionBlockBytes,
-    //   signature,
-    //   requestType: signAndExecuteTransactionBlockArgs.requestType,
-    //   options: signAndExecuteTransactionBlockArgs.options ?? {}
-    // });
   };
 
   const signPersonalMessage = async (
@@ -399,6 +406,9 @@ export function createWalletAdapter(
    * Return
    */
   return {
+    get suiClient() {
+      return suiClient;
+    },
     get autoConnectEnabled() {
       return autoConnectEnabled;
     },

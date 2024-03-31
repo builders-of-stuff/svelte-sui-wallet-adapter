@@ -1,3 +1,4 @@
+import type { SuiClient } from '@mysten/sui.js/client';
 import type {
   Wallet,
   WalletAccount,
@@ -58,6 +59,7 @@ export type WalletAdapterActions = {
 };
 
 export type WalletAdapter = {
+  suiClient: SuiClient;
   autoConnectEnabled: boolean;
   wallets: WalletWithRequiredFeatures[];
   accounts: readonly WalletAccount[];
