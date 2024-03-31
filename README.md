@@ -1,61 +1,16 @@
-## Use
+# Svelte Sui Wallet Adapter
 
-`npm install @builders-of-stuff/svelte-sui-wallet-adapter`
+A Sui wallet adapter for use with sveltekit and svelte 5.
 
-```
-<script lang="ts">
-import { walletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+NOT tested
+NOT ready for production
 
-const handleConnectWallet = async () => {
-  await walletAdapter.connectWallet();
-};
+Currently hard-coded for devnet
 
-const handleDisconnectWallet = async () => {
-  await walletAdapter.disconnectWallet();
-};
-</script>
+## Examples
 
-<button on:click={handleConnectWallet}>Connect Wallet</button>
-<button on:click={handleDisconnectWallet}>Disconnect Wallet</button>
-```
-
-## Types
-
-```
-export type WalletAdapterActions = {
-  setAccountSwitched: (selectedAccount: WalletAccount) => void;
-  setConnectionStatus: (connectionStatus: WalletConnectionStatus) => void;
-  setWalletConnected: (
-    wallet: WalletWithRequiredFeatures,
-    connectedAccounts: readonly WalletAccount[],
-    selectedAccount: WalletAccount | null
-  ) => void;
-  updateWalletAccounts: (accounts: readonly WalletAccount[]) => void;
-  setWalletDisconnected: () => void;
-  setWalletRegistered: (updatedWallets: WalletWithRequiredFeatures[]) => void;
-  setWalletUnregistered: (
-    updatedWallets: WalletWithRequiredFeatures[],
-    unregisteredWallet: Wallet
-  ) => void;
-};
-
-export type WalletAdapter = {
-  autoConnectEnabled: boolean;
-  wallets: WalletWithRequiredFeatures[];
-  accounts: readonly WalletAccount[];
-  currentWallet: WalletWithRequiredFeatures | null;
-  currentAccount: WalletAccount | null;
-  lastConnectedAccountAddress: string | null;
-  lastConnectedWalletName: string | null;
-  connectionStatus: WalletConnectionStatus;
-  isConnected: boolean;
-  isConnecting: boolean;
-  isDisconnected: boolean;
-  // temporary testing only?
-  connectWallet: any;
-  disconnectWallet: any;
-} & WalletAdapterActions;
-```
+https://github.com/KTruong008/sui-svelte-playground
+https://youtu.be/Z__tHvS4Kdo
 
 ## Developing
 
