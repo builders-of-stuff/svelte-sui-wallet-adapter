@@ -178,9 +178,9 @@ export function createWalletAdapter(
     setWalletDisconnected();
   }
 
-  async function signTransactionBlock(
+  const signTransactionBlock = async (
     signTransactionBlockArgs: SignTransactionBlockArgs
-  ): Promise<SignTransactionBlockResult> {
+  ): Promise<SignTransactionBlockResult> => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
     }
@@ -204,15 +204,15 @@ export function createWalletAdapter(
       account: signerAccount,
       chain: signTransactionBlockArgs.chain ?? signerAccount.chains[0]
     });
-  }
+  };
 
   /**
    * @TODO Sui client integration with executeFromWallet prop
    */
-  async function signAndExecuteTransactionBlock(
+  const signAndExecuteTransactionBlock = async (
     signAndExecuteTransactionBlockArgs: SignAndExecuteTransactionBlockArgs,
     executeFromWallet: boolean = false
-  ): Promise<SignAndExecuteTransactionBlockResult> {
+  ): Promise<SignAndExecuteTransactionBlockResult> => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
     }
@@ -261,11 +261,11 @@ export function createWalletAdapter(
     //   requestType: signAndExecuteTransactionBlockArgs.requestType,
     //   options: signAndExecuteTransactionBlockArgs.options ?? {}
     // });
-  }
+  };
 
-  async function signPersonalMessage(
+  const signPersonalMessage = async (
     signPersonalMessageArgs: SignPersonalMessageArgs
-  ): Promise<SignPersonalMessageResult> {
+  ): Promise<SignPersonalMessageResult> => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
     }
@@ -301,7 +301,7 @@ export function createWalletAdapter(
     }
 
     throw new Error("This wallet doesn't support the `signPersonalMessage` feature.");
-  }
+  };
 
   /**
    * Effects
