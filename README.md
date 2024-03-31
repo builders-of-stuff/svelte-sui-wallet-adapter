@@ -3,14 +3,24 @@
 A Sui wallet adapter for use with sveltekit and svelte 5.
 
 NOT tested
+
 NOT ready for production
 
-Currently hard-coded for devnet
+Currently hard-coded for devnet, and for Sui wallet
 
 ## Examples
 
 https://github.com/KTruong008/sui-svelte-playground
+
 https://youtu.be/Z__tHvS4Kdo
+
+## Current known issues
+
+- Hard-coded for devnet
+
+- Switching wallets seems broken
+
+- No local storage persistance
 
 ## Developing
 

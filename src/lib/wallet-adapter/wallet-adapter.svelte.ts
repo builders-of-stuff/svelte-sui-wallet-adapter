@@ -154,7 +154,6 @@ export function createWalletAdapter(
 
       setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
 
-      // I don't know what this is for...
       return { accounts: connectedSuiAccounts };
     } catch (error) {
       setConnectionStatus('disconnected');

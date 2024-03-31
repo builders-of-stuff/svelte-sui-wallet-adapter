@@ -14,43 +14,14 @@
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
 
-  // const MY_ADDRESS =
-  //   '0xe8468f320cf248052e931b3d0214e3f48049e86e28882b58579406cca7a51e86';
-
-  const MY_ADDRESS =
-    '0xeb666809d9917116673903de0c7641f42fd02ffea73dc9151d63122e308ba05c';
-
-  /**
-   * SuiClientProvider
-   */
-  const rpcUrl = getFullnodeUrl('devnet');
-  const suiClient = new SuiClient({ url: rpcUrl });
-
   /**
    * WalletProvider stuff (dapp-kit)
    */
   /**
-   * getRegisteredWallets
-   */
-  // const suiWallets = getRegisteredWallets();
-
-  // suiWallets.forEach((wallet) => {
-  //   console.log('wallet: ', wallet.name);
-  // });
-
-  /**
-   * walletAdapter.ts
-   */
-
-  // console.log('walletAdapter: ', walletAdapter);
-
-  // walletAdapter.connectWallet();
-
-  /**
    * Playground
    */
   const handleConnectWallet = async () => {
-    await walletAdapter.connectWallet();
+     await walletAdapter.connectWallet();
   };
 
   const handleDisconnectWallet = async () => {
@@ -98,19 +69,6 @@
     console.log('IsDisconnected: ', IsDisconnected);
   };
 
-  const makeSuiCall = async () => {
-    let balance = await suiClient.getCoins({
-      owner: MY_ADDRESS
-    });
-
-    return balance;
-  };
-
-  onMount(async () => {
-    let response = (await makeSuiCall()) as any;
-
-    // console.log('response: ', response);
-  });
 </script>
 
 {#snippet walletDisplay(wallet)}
