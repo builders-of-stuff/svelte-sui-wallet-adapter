@@ -1,8 +1,33 @@
 import type {
   Wallet,
   WalletAccount,
-  WalletWithRequiredFeatures
+  WalletWithRequiredFeatures,
+  SuiSignAndExecuteTransactionBlockInput,
+  SuiSignAndExecuteTransactionBlockOutput,
+  SuiSignPersonalMessageInput,
+  SuiSignPersonalMessageOutput,
+  SuiSignTransactionBlockInput,
+  SuiSignTransactionBlockOutput
 } from '@mysten/wallet-standard';
+
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<T>;
+
+export type SignTransactionBlockArgs = PartialBy<
+  SuiSignTransactionBlockInput,
+  'account' | 'chain'
+>;
+
+export type SignAndExecuteTransactionBlockArgs = PartialBy<
+  SuiSignAndExecuteTransactionBlockInput,
+  'account' | 'chain'
+>;
+
+export type SignPersonalMessageArgs = PartialBy<SuiSignPersonalMessageInput, 'account'>;
+
+export type SignTransactionBlockResult = SuiSignTransactionBlockOutput;
+export type SignAndExecuteTransactionBlockResult =
+  SuiSignAndExecuteTransactionBlockOutput;
+export type SignPersonalMessageResult = SuiSignPersonalMessageOutput;
 
 export type WalletConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -21,6 +46,15 @@ export type WalletAdapterActions = {
     updatedWallets: WalletWithRequiredFeatures[],
     unregisteredWallet: Wallet
   ) => void;
+  signTransactionBlock: (
+    args: SignTransactionBlockArgs
+  ) => Promise<SignTransactionBlockResult>;
+  signAndExecuteTransactionBlock: (
+    args: SignAndExecuteTransactionBlockArgs
+  ) => Promise<SignAndExecuteTransactionBlockResult>;
+  signPersonalMessage: (
+    args: SignPersonalMessageArgs
+  ) => Promise<SignPersonalMessageResult>;
 };
 
 export type WalletAdapter = {
