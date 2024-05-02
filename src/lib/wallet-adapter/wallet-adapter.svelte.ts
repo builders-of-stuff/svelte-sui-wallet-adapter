@@ -135,6 +135,8 @@ export function createWalletAdapter(
     accountAddress = lastConnectedAccountAddress,
     silent = false
   } = {}) {
+    console.log('accountAddress: ', accountAddress);
+    console.log('lastConnectedAccountAddress: ', lastConnectedAccountAddress);
     try {
       setConnectionStatus('connecting');
       const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
