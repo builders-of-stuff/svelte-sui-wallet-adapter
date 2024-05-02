@@ -27,10 +27,11 @@ import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
  * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
  *
  * @TODO Add support for persistance (localStorage?)
- * @TODO useUnsafeBurnerWa
+ * @TODO useUnsafeBurnerWallet
  *
  * @TODO ConnectButton
  * @TODO useSwitchAccount
+ * @TODO Add support for more wallets
  */
 export function createWalletAdapter(
   {
