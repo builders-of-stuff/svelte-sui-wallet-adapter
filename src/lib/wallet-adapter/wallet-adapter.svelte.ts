@@ -4,7 +4,6 @@ import type {
   WalletWithRequiredFeatures
 } from '@mysten/wallet-standard';
 import { getWallets } from '@mysten/wallet-standard';
-import { getFullnodeUrl, SuiClient } from '@mysten/sui.js/client';
 
 import {
   getRegisteredWallets,
@@ -13,7 +12,6 @@ import {
 } from './wallet-adapter-tools.js';
 import type {
   SignAndExecuteTransactionBlockArgs,
-  SignAndExecuteTransactionBlockResult,
   SignPersonalMessageArgs,
   SignPersonalMessageResult,
   SignTransactionBlockArgs,
@@ -22,6 +20,11 @@ import type {
   WalletConnectionStatus
 } from './wallet-adapter.type.js';
 import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
+import {
+  SuiClient,
+  getFullnodeUrl,
+  type SuiTransactionBlockResponse
+} from '@mysten/sui/client';
 
 /**
  * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
@@ -221,7 +224,7 @@ export function createWalletAdapter(
   const signAndExecuteTransactionBlock = async (
     signAndExecuteTransactionBlockArgs: SignAndExecuteTransactionBlockArgs,
     executeFromWallet: boolean = false
-  ): Promise<SignAndExecuteTransactionBlockResult> => {
+  ): Promise<SuiTransactionBlockResponse> => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
     }

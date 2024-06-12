@@ -1,4 +1,4 @@
-import type { SuiClient } from '@mysten/sui.js/client';
+import type { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import type {
   Wallet,
   WalletAccount,
@@ -52,7 +52,7 @@ export type WalletAdapterActions = {
   ) => Promise<SignTransactionBlockResult>;
   signAndExecuteTransactionBlock: (
     args: SignAndExecuteTransactionBlockArgs
-  ) => Promise<SignAndExecuteTransactionBlockResult>;
+  ) => Promise<SuiTransactionBlockResponse>;
   signPersonalMessage: (
     args: SignPersonalMessageArgs
   ) => Promise<SignPersonalMessageResult>;
