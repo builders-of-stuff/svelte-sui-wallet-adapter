@@ -1,15 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getFullnodeUrl, SuiClient } from '@mysten/sui.js/client';
-  import type {
-    Wallet,
-    WalletAccount,
-    WalletWithRequiredFeatures,
-    WalletWithFeatures,
-    MinimallyRequiredFeatures
-  } from '@mysten/wallet-standard';
-  import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
-  import { getRegisteredWallets, logWalletAdapterState, walletAdapter } from '$lib/index.js';
+  import {  logWalletAdapterState, walletAdapter } from '$lib/index.js';
 
   // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
   // import { MIST_PER_SUI } from '@mysten/sui.js/utils';

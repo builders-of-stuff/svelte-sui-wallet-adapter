@@ -59,6 +59,7 @@ export function createWalletAdapter(
     })
   );
   const autoConnectEnabled = $state(autoConnect);
+
   let wallets = $state(_wallets);
   let accounts = $state([] as WalletAccount[]);
   let currentWallet = $state(null as WalletWithRequiredFeatures | null);
