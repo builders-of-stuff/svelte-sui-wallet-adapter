@@ -18,7 +18,7 @@ import type {
   SignPersonalMessageResult,
   SignTransactionBlockArgs,
   SignTransactionBlockResult,
-  WalletAdapter,
+  WalletAdapter as WalletAdapterType,
   WalletConnectionStatus
 } from './wallet-adapter.type.js';
 import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
@@ -33,113 +33,194 @@ import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
  * @TODO useSwitchAccount
  * @TODO Add support for more wallets
  */
-export function createWalletAdapter(
-  {
-    wallets: _wallets = [],
-    // storage = localStorage,
-    // storageKey = DEFAULT_STORAGE_KEY,
-    // enableUnsafeBurner = false,
-    autoConnect = false,
-    rpcUrl = getFullnodeUrl('devnet')
-  } = {
-    wallets: getRegisteredWallets([SUI_WALLET_NAME]),
-    // storage: localStorage,
-    // storageKey: DEFAULT_STORAGE_KEY,
-    // enableUnsafeBurner: false,
-    autoConnect: false,
-    rpcUrl: getFullnodeUrl('devnet')
-  }
-): WalletAdapter {
-  /**
-   * State
-   */
-  const suiClient = $state(
-    new SuiClient({
+export class WalletAdapter {
+  constructor(
+    {
+      wallets: _wallets = [],
+      // storage = localStorage,
+      // storageKey = DEFAULT_STORAGE_KEY,
+      // enableUnsafeBurner = false,
+      autoConnect = false,
+      rpcUrl = getFullnodeUrl('devnet')
+    } = {
+      wallets: getRegisteredWallets([SUI_WALLET_NAME]),
+      // storage: localStorage,
+      // storageKey: DEFAULT_STORAGE_KEY,
+      // enableUnsafeBurner: false,
+      autoConnect: false,
+      rpcUrl: getFullnodeUrl('devnet')
+    }
+  ) {
+    this.#wallets = _wallets;
+    this.#suiClient = new SuiClient({
       url: rpcUrl
-    })
-  );
-  const autoConnectEnabled = $state(autoConnect);
-  let wallets = $state(_wallets);
-  let accounts = $state([] as WalletAccount[]);
-  let currentWallet = $state(null as WalletWithRequiredFeatures | null);
-  let currentAccount = $state(null as WalletAccount | null);
-  let lastConnectedAccountAddress = $state(null as string | null);
-  let lastConnectedWalletName = $state(null as string | null);
-  let connectionStatus = $state('disconnected' as WalletConnectionStatus);
+    });
 
-  /**
-   * Derived state
-   */
-  const isConnected = $derived(connectionStatus === 'connected');
-  const isConnecting = $derived(connectionStatus === 'connecting');
-  const isDisconnected = $derived(connectionStatus === 'disconnected');
+    /**
+     * Effects
+     *
+     * $effect.root required for using $effect outside a component
+     */
+    $effect.root(() => {
+      // useWalletsChanged
+      $effect(() => {
+        const walletsApi = getWallets();
 
-  /**
-   * State functions
-   */
-  const setConnectionStatus = (status: WalletConnectionStatus) => {
-    connectionStatus = status;
+        const unsubscribeFromRegister = walletsApi.on('register', () => {
+          this.setWalletRegistered(getRegisteredWallets());
+        });
+
+        const unsubscribeFromUnregister = walletsApi.on(
+          'unregister',
+          (unregisteredWallet) => {
+            this.setWalletUnregistered(getRegisteredWallets(), unregisteredWallet);
+          }
+        );
+
+        return () => {
+          unsubscribeFromRegister();
+          unsubscribeFromUnregister();
+        };
+      });
+
+      // useWalletPropertiesChanged
+      $effect(() => {
+        const unsubscribeFromEvents = this.currentWallet?.features[
+          'standard:events'
+        ].on('change', ({ accounts }) => {
+          // TODO: We should handle features changing that might make the list of wallets
+          // or even the current wallet incompatible with the dApp.
+          if (accounts) {
+            this.updateWalletAccounts(accounts);
+          }
+        });
+
+        return () => {
+          unsubscribeFromEvents?.();
+        };
+      });
+
+      // useUnsafeBurnerWallet (TODO)
+
+      /**
+       * useAutoConnectWallet
+       *
+       * Original implementation returns 'disabled' | 'idle' | 'attempted', but does not seem to be used anywhere.
+       * This implementation currently only auto-connects, no use of the return value.
+       */
+      $effect(() => {
+        const queryFn = untrack(() => async () => {
+          if (!this.autoConnectEnabled) {
+            return 'disabled';
+          }
+
+          if (
+            !this.lastConnectedWalletName ||
+            !this.lastConnectedAccountAddress ||
+            this.isConnected
+          ) {
+            return 'attempted';
+          }
+
+          const wallet = this.wallets?.find?.(
+            (wallet) =>
+              getWalletUniqueIdentifier(wallet) === this.lastConnectedWalletName
+          ) as any;
+          // const wallet = wallets?.find?.(Boolean) as any;
+
+          if (wallet) {
+            await this.connectWallet({
+              wallet,
+              accountAddress: this.lastConnectedAccountAddress,
+              silent: false
+            });
+          }
+
+          return 'attempted';
+        });
+
+        if (this.autoConnectEnabled) {
+          queryFn();
+        }
+      });
+    });
+  }
+
+  #suiClient = $state({} as SuiClient);
+  #autoConnectEnabled = $state(false);
+  #wallets = $state([] as any);
+  #accounts = $state([] as WalletAccount[]);
+  #currentWallet = $state(null as WalletWithRequiredFeatures | null);
+  #currentAccount = $state(null as WalletAccount | null);
+  #lastConnectedAccountAddress = $state(null as string | null);
+  #lastConnectedWalletName = $state(null as string | null);
+  #connectionStatus = $state('disconnected' as WalletConnectionStatus);
+
+  #isConnected = $derived(this.#connectionStatus === 'connected');
+  #isConnecting = $derived(this.#connectionStatus === 'connecting');
+  #isDisconnected = $derived(this.#connectionStatus === 'disconnected');
+
+  setConnectionStatus = (status: WalletConnectionStatus) => {
+    this.#connectionStatus = status;
   };
 
-  const setWalletConnected = (wallet, connectedAccounts, selectedAccounts) => {
-    accounts = connectedAccounts;
-    currentWallet = wallet;
-    currentAccount = selectedAccounts;
-    lastConnectedWalletName = getWalletUniqueIdentifier(wallet);
-    lastConnectedAccountAddress = selectedAccounts?.address;
-    connectionStatus = 'connected';
+  setWalletConnected = (wallet, connectedAccounts, selectedAccounts) => {
+    this.#accounts = connectedAccounts;
+    this.#currentWallet = wallet;
+    this.#currentAccount = selectedAccounts;
+    this.#lastConnectedWalletName = getWalletUniqueIdentifier(wallet);
+    this.#lastConnectedAccountAddress = selectedAccounts?.address;
+    this.#connectionStatus = 'connected';
   };
 
-  const setWalletDisconnected = () => {
-    accounts = [];
-    currentWallet = null;
-    currentAccount = null;
-    lastConnectedWalletName = null;
-    lastConnectedAccountAddress = null;
-    connectionStatus = 'disconnected';
+  setWalletDisconnected = () => {
+    this.#accounts = [];
+    this.#currentWallet = null;
+    this.#currentAccount = null;
+    this.#lastConnectedWalletName = null;
+    this.#lastConnectedAccountAddress = null;
+    this.#connectionStatus = 'disconnected';
   };
 
-  const setAccountSwitched = (selectedAccount) => {
-    currentAccount = selectedAccount;
-    lastConnectedAccountAddress = selectedAccount?.address;
+  setAccountSwitched = (selectedAccount) => {
+    this.#currentAccount = selectedAccount;
+    this.#lastConnectedAccountAddress = selectedAccount?.address;
   };
 
-  const setWalletRegistered = (updatedWallets) => {
-    wallets = updatedWallets;
+  setWalletRegistered = (updatedWallets) => {
+    this.#wallets = updatedWallets;
   };
 
-  const setWalletUnregistered = (updatedWallets, unregisteredWallet) => {
-    if (unregisteredWallet === currentWallet) {
-      wallets = updatedWallets;
-      setWalletDisconnected();
+  setWalletUnregistered = (updatedWallets, unregisteredWallet) => {
+    if (unregisteredWallet === this.#currentWallet) {
+      this.#wallets = updatedWallets;
+      this.setWalletDisconnected();
     } else {
-      wallets = updatedWallets;
+      this.#wallets = updatedWallets;
     }
   };
 
-  const updateWalletAccounts = (updatedAccounts) => {
-    accounts = updatedAccounts;
-    currentAccount =
-      (currentAccount &&
+  updateWalletAccounts = (updatedAccounts) => {
+    this.#accounts = updatedAccounts;
+    this.#currentAccount =
+      (this.#currentAccount &&
         updatedAccounts?.find?.(
-          ({ address }) => address === currentAccount?.address
+          ({ address }) => address === this.#currentAccount?.address
         )) ||
       updatedAccounts?.[0];
   };
 
-  /**
-   * Utility functions
-   */
   // temporary testing fn (useAutoConnectWallet.ts -> useConnectWallet.ts)
-  async function connectWallet({
-    wallet = wallets?.[0],
-    accountAddress = lastConnectedAccountAddress,
+  connectWallet = async ({
+    wallet = this.wallets?.[0],
+    accountAddress = this.lastConnectedAccountAddress,
     silent = false
-  } = {}) {
+  } = {}) => {
     console.log('accountAddress: ', accountAddress);
-    console.log('lastConnectedAccountAddress: ', lastConnectedAccountAddress);
+    console.log('lastConnectedAccountAddress: ', this.lastConnectedAccountAddress);
+
     try {
-      setConnectionStatus('connecting');
+      this.setConnectionStatus('connecting');
       const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
         // pops up connect modal
         silent
@@ -152,20 +233,20 @@ export function createWalletAdapter(
 
       const selectedAccount = getSelectedAccount(
         connectedSuiAccounts,
-        accountAddress || (lastConnectedAccountAddress as any)
+        accountAddress || (this.lastConnectedAccountAddress as any)
       );
 
-      setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
+      this.setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
 
       return { accounts: connectedSuiAccounts };
     } catch (error) {
-      setConnectionStatus('disconnected');
+      this.setConnectionStatus('disconnected');
       throw error;
     }
-  }
+  };
 
-  async function disconnectWallet() {
-    if (!currentWallet) {
+  disconnectWallet = async () => {
+    if (!this.currentWallet) {
       throw new Error('No wallet is connected');
     }
 
@@ -173,9 +254,11 @@ export function createWalletAdapter(
       // Wallets aren't required to implement the disconnect feature, so we'll
       // optionally call the disconnect feature if it exists and reset the UI
       // state on the frontend at a minimum.
-      await currentWallet.features['standard:disconnect']?.disconnect()?.then?.(() => {
-        setWalletDisconnected();
-      });
+      await this.currentWallet.features['standard:disconnect']
+        ?.disconnect()
+        ?.then?.(() => {
+          this.setWalletDisconnected();
+        });
     } catch (error) {
       console.error(
         'Failed to disconnect the application from the current wallet.',
@@ -183,24 +266,24 @@ export function createWalletAdapter(
       );
     }
 
-    setWalletDisconnected();
-  }
+    this.setWalletDisconnected();
+  };
 
-  const signTransactionBlock = async (
-    signTransactionBlockArgs: SignTransactionBlockArgs
+  signTransactionBlock = async (
+    args: SignTransactionBlockArgs
   ): Promise<SignTransactionBlockResult> => {
-    if (!currentWallet) {
+    if (!this.currentWallet) {
       throw new Error('No wallet is connected.');
     }
 
-    const signerAccount = signTransactionBlockArgs.account ?? currentAccount;
+    const signerAccount = args.account ?? this.currentAccount;
     if (!signerAccount) {
       throw new Error(
         'No wallet account is selected to sign the transaction block with.'
       );
     }
 
-    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
+    const walletFeature = this.currentWallet.features['sui:signTransactionBlock'];
     if (!walletFeature) {
       throw new Error(
         "This wallet doesn't support the `SignTransactionBlock` feature."
@@ -208,24 +291,24 @@ export function createWalletAdapter(
     }
 
     return await walletFeature.signTransactionBlock({
-      transactionBlock: signTransactionBlockArgs.transactionBlock,
+      transactionBlock: args.transactionBlock,
       account: signerAccount,
-      chain: signTransactionBlockArgs.chain ?? signerAccount.chains[0]
+      chain: args.chain ?? signerAccount.chains[0]
     });
   };
 
   /**
    * @TODO Sui client integration with executeFromWallet prop
    */
-  const signAndExecuteTransactionBlock = async (
-    signAndExecuteTransactionBlockArgs: SignAndExecuteTransactionBlockArgs,
+  signAndExecuteTransactionBlock = async (
+    args: SignAndExecuteTransactionBlockArgs,
     executeFromWallet: boolean = false
   ): Promise<SignAndExecuteTransactionBlockResult> => {
-    if (!currentWallet) {
+    if (!this.currentWallet) {
       throw new Error('No wallet is connected.');
     }
 
-    const signerAccount = signAndExecuteTransactionBlockArgs.account ?? currentAccount;
+    const signerAccount = args.account ?? this.currentAccount;
     if (!signerAccount) {
       throw new Error(
         'No wallet account is selected to sign and execute the transaction block with.'
@@ -234,7 +317,7 @@ export function createWalletAdapter(
 
     if (executeFromWallet) {
       const walletFeature =
-        currentWallet.features['sui:signAndExecuteTransactionBlock'];
+        this?.currentWallet?.features?.['sui:signAndExecuteTransactionBlock'];
       if (!walletFeature) {
         throw new Error(
           "This wallet doesn't support the `signAndExecuteTransactionBlock` feature."
@@ -242,15 +325,15 @@ export function createWalletAdapter(
       }
 
       return walletFeature.signAndExecuteTransactionBlock({
-        ...signAndExecuteTransactionBlockArgs,
+        ...args,
         account: signerAccount,
-        chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0],
-        requestType: signAndExecuteTransactionBlockArgs.requestType,
-        options: signAndExecuteTransactionBlockArgs.options ?? {}
+        chain: args.chain ?? signerAccount.chains[0],
+        requestType: args.requestType,
+        options: args.options ?? {}
       });
     }
 
-    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
+    const walletFeature = this?.currentWallet?.features?.['sui:signTransactionBlock'];
     if (!walletFeature) {
       throw new Error(
         "This wallet doesn't support the `signTransactionBlock` feature."
@@ -259,27 +342,27 @@ export function createWalletAdapter(
 
     const { signature, transactionBlockBytes } =
       await walletFeature.signTransactionBlock({
-        ...signAndExecuteTransactionBlockArgs,
+        ...args,
         account: signerAccount,
-        chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0]
+        chain: args.chain ?? signerAccount.chains[0]
       });
 
-    return suiClient.executeTransactionBlock({
+    return this.suiClient.executeTransactionBlock({
       transactionBlock: transactionBlockBytes,
       signature,
-      requestType: signAndExecuteTransactionBlockArgs.requestType,
-      options: signAndExecuteTransactionBlockArgs.options ?? {}
+      requestType: args.requestType,
+      options: args.options ?? {}
     });
   };
 
-  const signPersonalMessage = async (
-    signPersonalMessageArgs: SignPersonalMessageArgs
+  signPersonalMessage = async (
+    args: SignPersonalMessageArgs
   ): Promise<SignPersonalMessageResult> => {
-    if (!currentWallet) {
+    if (!this.currentWallet) {
       throw new Error('No wallet is connected.');
     }
 
-    const signerAccount = signPersonalMessageArgs.account ?? currentAccount;
+    const signerAccount = args.account ?? this.currentAccount;
     if (!signerAccount) {
       throw new Error(
         'No wallet account is selected to sign the personal message with.'
@@ -287,23 +370,23 @@ export function createWalletAdapter(
     }
 
     const signPersonalMessageFeature =
-      currentWallet.features['sui:signPersonalMessage'];
+      this.currentWallet.features['sui:signPersonalMessage'];
     if (signPersonalMessageFeature) {
       return await signPersonalMessageFeature.signPersonalMessage({
-        ...signPersonalMessageArgs,
+        ...args,
         account: signerAccount
       });
     }
 
     // TODO: Remove this once we officially discontinue sui:signMessage in the wallet standard
-    const signMessageFeature = currentWallet.features['sui:signMessage'];
+    const signMessageFeature = this.currentWallet.features['sui:signMessage'];
     if (signMessageFeature) {
       console.warn(
         "This wallet doesn't support the `signPersonalMessage` feature... falling back to `signMessage`."
       );
 
       const { messageBytes, signature } = await signMessageFeature.signMessage({
-        ...signPersonalMessageArgs,
+        ...args,
         account: signerAccount
       });
       return { bytes: messageBytes, signature };
@@ -312,151 +395,53 @@ export function createWalletAdapter(
     throw new Error("This wallet doesn't support the `signPersonalMessage` feature.");
   };
 
-  /**
-   * Effects
-   *
-   * $effect.root required for using $effect outside a component
-   */
-  $effect.root(() => {
-    // useWalletsChanged
-    $effect(() => {
-      const walletsApi = getWallets();
+  get suiClient() {
+    return this.#suiClient;
+  }
 
-      const unsubscribeFromRegister = walletsApi.on('register', () => {
-        setWalletRegistered(getRegisteredWallets());
-      });
+  get autoConnectEnabled() {
+    return this.#autoConnectEnabled;
+  }
 
-      const unsubscribeFromUnregister = walletsApi.on(
-        'unregister',
-        (unregisteredWallet) => {
-          setWalletUnregistered(getRegisteredWallets(), unregisteredWallet);
-        }
-      );
+  get wallets() {
+    return this.#wallets;
+  }
 
-      return () => {
-        unsubscribeFromRegister();
-        unsubscribeFromUnregister();
-      };
-    });
+  get accounts() {
+    return this.#accounts;
+  }
 
-    // useWalletPropertiesChanged
-    $effect(() => {
-      const unsubscribeFromEvents = currentWallet?.features['standard:events'].on(
-        'change',
-        ({ accounts }) => {
-          // TODO: We should handle features changing that might make the list of wallets
-          // or even the current wallet incompatible with the dApp.
-          if (accounts) {
-            updateWalletAccounts(accounts);
-          }
-        }
-      );
+  get currentWallet() {
+    return this.#currentWallet;
+  }
 
-      return () => {
-        unsubscribeFromEvents?.();
-      };
-    });
+  get currentAccount() {
+    return this.#currentAccount;
+  }
 
-    // useUnsafeBurnerWallet (TODO)
+  get lastConnectedAccountAddress() {
+    return this.#lastConnectedAccountAddress;
+  }
 
-    /**
-     * useAutoConnectWallet
-     *
-     * Original implementation returns 'disabled' | 'idle' | 'attempted', but does not seem to be used anywhere.
-     * This implementation currently only auto-connects, no use of the return value.
-     */
-    $effect(() => {
-      const queryFn = untrack(
-        () =>
-          async function () {
-            if (!autoConnectEnabled) {
-              return 'disabled';
-            }
+  get lastConnectedWalletName() {
+    return this.#lastConnectedWalletName;
+  }
 
-            if (
-              !lastConnectedWalletName ||
-              !lastConnectedAccountAddress ||
-              isConnected
-            ) {
-              return 'attempted';
-            }
+  get connectionStatus() {
+    return this.#connectionStatus;
+  }
 
-            const wallet = wallets?.find?.(
-              (wallet) => getWalletUniqueIdentifier(wallet) === lastConnectedWalletName
-            ) as any;
-            // const wallet = wallets?.find?.(Boolean) as any;
+  get isConnected() {
+    return this.#isConnected;
+  }
 
-            if (wallet) {
-              await connectWallet({
-                wallet,
-                accountAddress: lastConnectedAccountAddress,
-                silent: false
-              });
-            }
+  get isConnecting() {
+    return this.#isConnecting;
+  }
 
-            return 'attempted';
-          }
-      );
-
-      if (autoConnectEnabled) {
-        queryFn();
-      }
-    });
-  });
-
-  /**
-   * Return
-   */
-  return {
-    get suiClient() {
-      return suiClient;
-    },
-    get autoConnectEnabled() {
-      return autoConnectEnabled;
-    },
-    get wallets() {
-      return wallets;
-    },
-    get accounts() {
-      return accounts;
-    },
-    get currentWallet() {
-      return currentWallet;
-    },
-    get currentAccount() {
-      return currentAccount;
-    },
-    get lastConnectedAccountAddress() {
-      return lastConnectedAccountAddress;
-    },
-    get lastConnectedWalletName() {
-      return lastConnectedWalletName;
-    },
-    get connectionStatus() {
-      return connectionStatus;
-    },
-    get isConnected() {
-      return isConnected;
-    },
-    get isConnecting() {
-      return isConnecting;
-    },
-    get isDisconnected() {
-      return isDisconnected;
-    },
-    setConnectionStatus,
-    setWalletConnected,
-    setWalletDisconnected,
-    setAccountSwitched,
-    setWalletRegistered,
-    setWalletUnregistered,
-    updateWalletAccounts,
-    connectWallet,
-    disconnectWallet,
-    signTransactionBlock,
-    signAndExecuteTransactionBlock,
-    signPersonalMessage
-  };
+  get isDisconnected() {
+    return this.#isDisconnected;
+  }
 }
 
-export const walletAdapter = createWalletAdapter();
+export const walletAdapter = new WalletAdapter();
