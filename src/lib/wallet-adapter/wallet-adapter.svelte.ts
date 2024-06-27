@@ -314,16 +314,11 @@ export function createWalletAdapter(
     });
   };
 
-  const signAndExecuteTransaction = async (
-    { transaction, ...args }: SignAndExecuteTransactionArgs,
-    execute?: ({
-      bytes,
-      signature
-    }: {
-      bytes: string;
-      signature: string;
-    }) => Promise<any>
-  ): Promise<SignAndExecuteTransactionResult> => {
+  const signAndExecuteTransaction = async ({
+    transaction,
+    execute,
+    ...args
+  }: SignAndExecuteTransactionArgs): Promise<SignAndExecuteTransactionResult> => {
     const executeTransaction: ({
       bytes,
       signature

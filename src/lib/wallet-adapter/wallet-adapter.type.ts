@@ -44,6 +44,13 @@ export type SignAndExecuteTransactionArgs = PartialBy<
   'account' | 'chain'
 > & {
   transaction: Transaction | string;
+  execute?: ({
+    bytes,
+    signature
+  }: {
+    bytes: string;
+    signature: string;
+  }) => Promise<any>;
 };
 
 export type SignAndExecuteTransactionBlockArgs = PartialBy<
@@ -106,14 +113,7 @@ export type WalletAdapterActions = {
     args: SignTransactionBlockArgs
   ) => Promise<SignTransactionBlockResult>;
   signAndExecuteTransaction: (
-    args: SignAndExecuteTransactionArgs,
-    execute?: ({
-      bytes,
-      signature
-    }: {
-      bytes: string;
-      signature: string;
-    }) => Promise<any>
+    args: SignAndExecuteTransactionArgs
   ) => Promise<SignAndExecuteTransactionResult>;
   signAndExecuteTransactionBlock: (
     args: SignAndExecuteTransactionBlockArgs
