@@ -29,7 +29,10 @@ import type {
   WalletAdapter,
   WalletConnectionStatus
 } from './wallet-adapter.type.js';
-import { SUI_WALLET_NAME } from './wallet-adapter.constant.js';
+import {
+  DEFAULT_PREFERRED_WALLETS,
+  SUI_WALLET_NAME
+} from './wallet-adapter.constant.js';
 import {
   SuiClient,
   getFullnodeUrl,
@@ -49,7 +52,7 @@ import type { Transaction } from '@mysten/sui/transactions';
  */
 export function createWalletAdapter(
   {
-    wallets: _wallets = [],
+    wallets: _wallets = getRegisteredWallets([SUI_WALLET_NAME]),
     // storage = localStorage,
     // storageKey = DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner = false,
@@ -151,9 +154,8 @@ export function createWalletAdapter(
   };
 
   /**
-   * Utility functions
+   * Connect wallet
    */
-  // temporary testing fn (useAutoConnectWallet.ts -> useConnectWallet.ts)
   async function connectWallet({
     wallet = wallets?.[0],
     accountAddress = lastConnectedAccountAddress,
@@ -187,6 +189,9 @@ export function createWalletAdapter(
     }
   }
 
+  /**
+   * Disconnect wallet
+   */
   async function disconnectWallet() {
     if (!currentWallet) {
       throw new Error('No wallet is connected');
@@ -209,6 +214,9 @@ export function createWalletAdapter(
     setWalletDisconnected();
   }
 
+  /**
+   * Report transaction effects
+   */
   const reportTransactionEffects = async (args: ReportTransactionEffectsArgs) => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
@@ -234,6 +242,9 @@ export function createWalletAdapter(
     }
   };
 
+  /**
+   * Sign transaction
+   */
   const signTransaction = async (
     transaction: Transaction | string,
     args: SignTransactionArgs
@@ -283,6 +294,9 @@ export function createWalletAdapter(
     };
   };
 
+  /**
+   * Sign & execute transaction
+   */
   const signAndExecuteTransaction = async ({
     transaction,
     execute,
@@ -364,6 +378,9 @@ export function createWalletAdapter(
     return result as any;
   };
 
+  /**
+   * Sign personal message
+   */
   const signPersonalMessage = async (
     signPersonalMessageArgs: SignPersonalMessageArgs
   ): Promise<SignPersonalMessageResult> => {
@@ -504,6 +521,7 @@ export function createWalletAdapter(
     // useWalletsChanged
     $effect(() => {
       const walletsApi = getWallets();
+      setWalletRegistered(getRegisteredWallets(DEFAULT_PREFERRED_WALLETS));
 
       const unsubscribeFromRegister = walletsApi.on('register', () => {
         setWalletRegistered(getRegisteredWallets());
