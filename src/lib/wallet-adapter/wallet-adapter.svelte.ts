@@ -283,37 +283,6 @@ export function createWalletAdapter(
     };
   };
 
-  /**
-   * Deprecated in favor of signTransaction
-   */
-  const signTransactionBlock = async (
-    signTransactionBlockArgs: SignTransactionBlockArgs
-  ): Promise<SignTransactionBlockResult> => {
-    if (!currentWallet) {
-      throw new Error('No wallet is connected.');
-    }
-
-    const signerAccount = signTransactionBlockArgs.account ?? currentAccount;
-    if (!signerAccount) {
-      throw new Error(
-        'No wallet account is selected to sign the transaction block with.'
-      );
-    }
-
-    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
-    if (!walletFeature) {
-      throw new Error(
-        "This wallet doesn't support the `SignTransactionBlock` feature."
-      );
-    }
-
-    return await walletFeature.signTransactionBlock({
-      transactionBlock: signTransactionBlockArgs.transactionBlock,
-      account: signerAccount,
-      chain: signTransactionBlockArgs.chain ?? signerAccount.chains[0]
-    });
-  };
-
   const signAndExecuteTransaction = async ({
     transaction,
     execute,
@@ -395,6 +364,77 @@ export function createWalletAdapter(
     return result as any;
   };
 
+  const signPersonalMessage = async (
+    signPersonalMessageArgs: SignPersonalMessageArgs
+  ): Promise<SignPersonalMessageResult> => {
+    if (!currentWallet) {
+      throw new Error('No wallet is connected.');
+    }
+
+    const signerAccount = signPersonalMessageArgs.account ?? currentAccount;
+    if (!signerAccount) {
+      throw new Error(
+        'No wallet account is selected to sign the personal message with.'
+      );
+    }
+
+    const signPersonalMessageFeature =
+      currentWallet.features['sui:signPersonalMessage'];
+    if (signPersonalMessageFeature) {
+      return await signPersonalMessageFeature.signPersonalMessage({
+        ...signPersonalMessageArgs,
+        account: signerAccount
+      });
+    }
+
+    // TODO: Remove this once we officially discontinue sui:signMessage in the wallet standard
+    const signMessageFeature = currentWallet.features['sui:signMessage'];
+    if (signMessageFeature) {
+      console.warn(
+        "This wallet doesn't support the `signPersonalMessage` feature... falling back to `signMessage`."
+      );
+
+      const { messageBytes, signature } = await signMessageFeature.signMessage({
+        ...signPersonalMessageArgs,
+        account: signerAccount
+      });
+      return { bytes: messageBytes, signature };
+    }
+
+    throw new Error("This wallet doesn't support the `signPersonalMessage` feature.");
+  };
+
+  /**
+   * Deprecated in favor of signTransaction
+   */
+  const signTransactionBlock = async (
+    signTransactionBlockArgs: SignTransactionBlockArgs
+  ): Promise<SignTransactionBlockResult> => {
+    if (!currentWallet) {
+      throw new Error('No wallet is connected.');
+    }
+
+    const signerAccount = signTransactionBlockArgs.account ?? currentAccount;
+    if (!signerAccount) {
+      throw new Error(
+        'No wallet account is selected to sign the transaction block with.'
+      );
+    }
+
+    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
+    if (!walletFeature) {
+      throw new Error(
+        "This wallet doesn't support the `SignTransactionBlock` feature."
+      );
+    }
+
+    return await walletFeature.signTransactionBlock({
+      transactionBlock: signTransactionBlockArgs.transactionBlock,
+      account: signerAccount,
+      chain: signTransactionBlockArgs.chain ?? signerAccount.chains[0]
+    });
+  };
+
   /**
    * Deprecated in favor of signAndExecuteTransaction
    *
@@ -453,46 +493,6 @@ export function createWalletAdapter(
       requestType: signAndExecuteTransactionBlockArgs.requestType,
       options: signAndExecuteTransactionBlockArgs.options ?? {}
     });
-  };
-
-  const signPersonalMessage = async (
-    signPersonalMessageArgs: SignPersonalMessageArgs
-  ): Promise<SignPersonalMessageResult> => {
-    if (!currentWallet) {
-      throw new Error('No wallet is connected.');
-    }
-
-    const signerAccount = signPersonalMessageArgs.account ?? currentAccount;
-    if (!signerAccount) {
-      throw new Error(
-        'No wallet account is selected to sign the personal message with.'
-      );
-    }
-
-    const signPersonalMessageFeature =
-      currentWallet.features['sui:signPersonalMessage'];
-    if (signPersonalMessageFeature) {
-      return await signPersonalMessageFeature.signPersonalMessage({
-        ...signPersonalMessageArgs,
-        account: signerAccount
-      });
-    }
-
-    // TODO: Remove this once we officially discontinue sui:signMessage in the wallet standard
-    const signMessageFeature = currentWallet.features['sui:signMessage'];
-    if (signMessageFeature) {
-      console.warn(
-        "This wallet doesn't support the `signPersonalMessage` feature... falling back to `signMessage`."
-      );
-
-      const { messageBytes, signature } = await signMessageFeature.signMessage({
-        ...signPersonalMessageArgs,
-        account: signerAccount
-      });
-      return { bytes: messageBytes, signature };
-    }
-
-    throw new Error("This wallet doesn't support the `signPersonalMessage` feature.");
   };
 
   /**

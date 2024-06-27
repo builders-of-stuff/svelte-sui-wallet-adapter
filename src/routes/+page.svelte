@@ -1,9 +1,6 @@
 <script lang="ts">
   import {  logWalletAdapterState, walletAdapter } from '$lib/index.js';
 
-  // import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui.js/faucet';
-  // import { MIST_PER_SUI } from '@mysten/sui.js/utils';
-
   /**
    * WalletProvider stuff (dapp-kit)
    */
