@@ -109,18 +109,20 @@ export type WalletAdapterActions = {
     transaction: Transaction | string,
     args: SignTransactionArgs
   ) => Promise<SignTransactionResult>;
-  signTransactionBlock: (
-    args: SignTransactionBlockArgs
-  ) => Promise<SignTransactionBlockResult>;
   signAndExecuteTransaction: (
     args: SignAndExecuteTransactionArgs
   ) => Promise<SignAndExecuteTransactionResult>;
-  signAndExecuteTransactionBlock: (
-    args: SignAndExecuteTransactionBlockArgs
-  ) => Promise<SuiTransactionBlockResponse>;
   signPersonalMessage: (
     args: SignPersonalMessageArgs
   ) => Promise<SignPersonalMessageResult>;
+  switchAccount: (account: WalletAccount) => void;
+  // Deprecated functions
+  signTransactionBlock: (
+    args: SignTransactionBlockArgs
+  ) => Promise<SignTransactionBlockResult>;
+  signAndExecuteTransactionBlock: (
+    args: SignAndExecuteTransactionBlockArgs
+  ) => Promise<SuiTransactionBlockResponse>;
 };
 
 export type WalletAdapter = {

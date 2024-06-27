@@ -422,6 +422,26 @@ export function createWalletAdapter(
   };
 
   /**
+   * Switch account
+   */
+  const switchAccount = async (account: WalletAccount) => {
+    if (!currentWallet) {
+      throw new Error('No wallet is connected.');
+    }
+
+    const accountToSelect = currentWallet.accounts.find(
+      (walletAccount) => walletAccount.address === account.address
+    );
+    if (!accountToSelect) {
+      throw new Error(
+        `No account with address ${account?.address} is connected to ${currentWallet?.name}.`
+      );
+    }
+
+    setAccountSwitched(accountToSelect);
+  };
+
+  /**
    * Deprecated in favor of signTransaction
    */
   const signTransactionBlock = async (
@@ -659,10 +679,11 @@ export function createWalletAdapter(
     disconnectWallet,
     reportTransactionEffects,
     signTransaction,
-    signTransactionBlock,
     signAndExecuteTransaction,
-    signAndExecuteTransactionBlock,
-    signPersonalMessage
+    signPersonalMessage,
+    switchAccount,
+    signTransactionBlock,
+    signAndExecuteTransactionBlock
   };
 }
 
