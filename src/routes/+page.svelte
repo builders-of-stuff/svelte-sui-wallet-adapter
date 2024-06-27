@@ -89,6 +89,7 @@
 {/snippet}
 
 <a href="/two">Page two</a>
+<a href="/three">Page three</a>
 
 <br />
 <br />
