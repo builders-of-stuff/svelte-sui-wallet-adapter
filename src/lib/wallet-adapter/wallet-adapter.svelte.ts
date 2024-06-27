@@ -47,7 +47,6 @@ import type { Transaction } from '@mysten/sui/transactions';
  * @TODO useUnsafeBurnerWallet
  *
  * @TODO ConnectButton
- * @TODO useSwitchAccount
  * @TODO Add support for more wallets
  */
 export function createWalletAdapter(
@@ -161,8 +160,6 @@ export function createWalletAdapter(
     accountAddress = lastConnectedAccountAddress,
     silent = false
   } = {}) {
-    console.log('accountAddress: ', accountAddress);
-    console.log('lastConnectedAccountAddress: ', lastConnectedAccountAddress);
     try {
       setConnectionStatus('connecting');
       const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
