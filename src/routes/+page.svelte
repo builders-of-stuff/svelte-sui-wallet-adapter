@@ -90,6 +90,7 @@
 
 <a href="/two">Page two</a>
 <a href="/three">Page three</a>
+<a href="/four">Page four</a>
 
 <br />
 <br />

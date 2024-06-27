@@ -8,6 +8,12 @@ import {
   signTransaction as mystenSignTransaction
 } from '@mysten/wallet-standard';
 import { toB64 } from '@mysten/sui/utils';
+import {
+  SuiClient,
+  getFullnodeUrl,
+  type SuiTransactionBlockResponse
+} from '@mysten/sui/client';
+import type { Transaction } from '@mysten/sui/transactions';
 
 import {
   getRegisteredWallets,
@@ -33,12 +39,6 @@ import {
   DEFAULT_PREFERRED_WALLETS,
   SUI_WALLET_NAME
 } from './wallet-adapter.constant.js';
-import {
-  SuiClient,
-  getFullnodeUrl,
-  type SuiTransactionBlockResponse
-} from '@mysten/sui/client';
-import type { Transaction } from '@mysten/sui/transactions';
 
 /**
  * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
