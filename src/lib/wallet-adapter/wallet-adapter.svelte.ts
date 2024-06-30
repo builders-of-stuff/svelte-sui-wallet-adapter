@@ -665,10 +665,6 @@ export function createWalletAdapter(
     get isDisconnected() {
       return isDisconnected;
     },
-    setConnectionStatus,
-    setWalletConnected,
-    setWalletDisconnected,
-    setAccountSwitched,
     setWalletRegistered,
     setWalletUnregistered,
     updateWalletAccounts,

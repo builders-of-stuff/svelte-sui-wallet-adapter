@@ -90,15 +90,9 @@ export type SignPersonalMessageResult = SuiSignPersonalMessageOutput;
 export type WalletConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 export type WalletAdapterActions = {
-  setAccountSwitched: (selectedAccount: WalletAccount) => void;
-  setConnectionStatus: (connectionStatus: WalletConnectionStatus) => void;
-  setWalletConnected: (
-    wallet: WalletWithRequiredFeatures,
-    connectedAccounts: readonly WalletAccount[],
-    selectedAccount: WalletAccount | null
-  ) => void;
+  connectWallet: any;
+  disconnectWallet: any;
   updateWalletAccounts: (accounts: readonly WalletAccount[]) => void;
-  setWalletDisconnected: () => void;
   setWalletRegistered: (updatedWallets: WalletWithRequiredFeatures[]) => void;
   setWalletUnregistered: (
     updatedWallets: WalletWithRequiredFeatures[],
@@ -139,7 +133,4 @@ export type WalletAdapter = {
   isConnected: boolean;
   isConnecting: boolean;
   isDisconnected: boolean;
-  // temporary testing only?
-  connectWallet: any;
-  disconnectWallet: any;
 } & WalletAdapterActions;

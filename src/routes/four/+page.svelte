@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ConnectModal from '$lib/components/connect-modal/connect-modal.svelte';
+  import ConnectButton from '$lib/components/connect-button/connect-button.svelte';
   import { walletAdapter } from '$lib/index.js';
 </script>
 
@@ -7,4 +7,4 @@
   <a href="/">Home</a>
 </div>
 
-<ConnectModal {walletAdapter} />
+<ConnectButton {walletAdapter} />
