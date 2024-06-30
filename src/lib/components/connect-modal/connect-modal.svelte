@@ -12,7 +12,7 @@
     walletAdapter: WalletAdapter;
   }>();
 
-  let selectedWallet = $state();
+  let selectedWallet = $state() as any;
   let isDialogOpen = $state(false);
 </script>
 
@@ -34,19 +34,19 @@
               name={wallet.name}
               icon={wallet.icon}
               isSelected={getWalletUniqueIdentifier(wallet) ===
-                    getWalletUniqueIdentifier(selectedWallet as any)}
+                getWalletUniqueIdentifier(selectedWallet)}
               onClick={() => {
-                    if (
-                      getWalletUniqueIdentifier(wallet) !==
-                      getWalletUniqueIdentifier(selectedWallet as any)
-                    ) {
-                      selectedWallet = wallet
-                      walletAdapter.connectWallet({
-                        wallet
-                      })
-                      isDialogOpen = false
-                    }
-                  }}
+                if (
+                  getWalletUniqueIdentifier(wallet) !==
+                  getWalletUniqueIdentifier(selectedWallet)
+                ) {
+                  selectedWallet = wallet;
+                  walletAdapter.connectWallet({
+                    wallet
+                  });
+                  isDialogOpen = false;
+                }
+              }}
             />
           {/each}
         </RadioGroup.Root>
