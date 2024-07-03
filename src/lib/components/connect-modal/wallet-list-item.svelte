@@ -1,31 +1,32 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button/index.js';
-  import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-  import { Label } from '$lib/components/ui/label/index.js';
-
   let {
     name,
     icon: Icon,
-    onClick = () => {},
-    isSelected = false
+    isFirst = false,
+    isLast = false,
+    isSelected = false,
+    onClick = () => {}
   } = $props<{
     name: string;
     icon: any;
-    onClick?: () => void;
+    isFirst?: boolean;
+    isLast?: boolean;
     isSelected?: boolean;
+    onClick?: () => void;
   }>();
 </script>
 
 <button
   onclick={onClick}
-  class={`flex items-center justify-start gap-4 rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground ${
-    isSelected ? 'border-primary' : ''
+  class={`flex items-center justify-start gap-4 ${
+    isFirst ? 'rounded-t-md' : isLast ? 'rounded-b-md' : 'rounded-none'
+  } border ${
+    isSelected ? 'border-primary' : 'border-muted'
+  } bg-popover p-2 hover:bg-accent hover:text-accent-foreground ${
+    !isFirst && !isLast ? 'border-t-0' : ''
   }`}
 >
   {#if typeof Icon === 'string'}
-    <!-- <img src={Icon} alt={`${name} logo`} /> -->
-
-    <!-- Make it fit -->
     <img src={Icon} alt={`${name} logo`} style="width: 50px; height: 50px;" />
   {:else}
     <Icon />

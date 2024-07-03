@@ -1,7 +1,6 @@
 <script lang="ts">
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import { Button } from '$lib/components/ui/button/index.js';
-  import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
   import type { WalletAdapter } from '$lib/wallet-adapter/wallet-adapter.type.js';
   import { getWalletUniqueIdentifier } from '$lib/wallet-adapter/wallet-adapter-tools.js';
 
@@ -18,7 +17,7 @@
 
 <Dialog.Root bind:open={isDialogOpen}>
   <!-- Trigger/button -->
-  <Dialog.Trigger><Button>Open</Button></Dialog.Trigger>
+  <Dialog.Trigger><Button>Connect</Button></Dialog.Trigger>
 
   <!-- Modal -->
   <Dialog.Content>
@@ -28,11 +27,13 @@
 
     <Dialog.Description>
       {#if walletAdapter?.wallets?.length > 0}
-        <div class="flex flex-col gap-4">
-          {#each walletAdapter.wallets as wallet}
+        <div class="flex flex-col">
+          {#each walletAdapter.wallets as wallet, index}
             <WalletListItem
               name={wallet.name}
               icon={wallet.icon}
+              isFirst={index === 0}
+              isLast={index === walletAdapter.wallets.length - 1}
               isSelected={getWalletUniqueIdentifier(wallet) ===
                 getWalletUniqueIdentifier(selectedWallet)}
               onClick={() => {
