@@ -1,18 +1,10 @@
 <script lang="ts">
   import type { WalletAdapter } from '$lib/wallet-adapter/wallet-adapter.type.js';
-  import AccountDropdownMenu from '../account-dropdown-menu/account-dropdown-menu.svelte';
-  import ConnectModal from '../connect-modal/connect-modal.svelte';
+  import AccountDropdownMenu from '$lib/components/account-dropdown-menu/account-dropdown-menu.svelte';
+  import ConnectModal from '$lib/components/connect-modal/connect-modal.svelte';
 
-  let {
-    connectText = 'Connect wallet',
-    walletAdapter,
-    extraClasses,
-    overrideClasses
-  } = $props<{
-    connectText?: string;
+  let { walletAdapter } = $props<{
     walletAdapter: WalletAdapter;
-    extraClasses?: string;
-    overrideClasses?: string;
   }>();
 </script>
 

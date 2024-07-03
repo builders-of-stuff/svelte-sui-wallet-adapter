@@ -28,7 +28,7 @@
 
     <Dialog.Description>
       {#if walletAdapter?.wallets?.length > 0}
-        <RadioGroup.Root value="" class="grid grid-cols-3 gap-4">
+        <div class="flex flex-col gap-4">
           {#each walletAdapter.wallets as wallet}
             <WalletListItem
               name={wallet.name}
@@ -49,7 +49,7 @@
               }}
             />
           {/each}
-        </RadioGroup.Root>
+        </div>
       {:else}
         <WalletListItem name="Sui Wallet" icon={SuiIcon} isSelected />
       {/if}

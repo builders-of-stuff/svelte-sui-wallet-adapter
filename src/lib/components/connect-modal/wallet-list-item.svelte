@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from '$lib/components/ui/button/index.js';
   import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
 
@@ -15,18 +16,19 @@
   }>();
 </script>
 
-<Label
+<button
   onclick={onClick}
-  for={name}
-  class={`flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground ${
+  class={`flex items-center justify-start gap-4 rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground ${
     isSelected ? 'border-primary' : ''
   }`}
 >
-  <RadioGroup.Item value={name} id={name} class="sr-only" aria-label={name} />
   {#if typeof Icon === 'string'}
-    <img src={Icon} alt={`${name} logo`} />
+    <!-- <img src={Icon} alt={`${name} logo`} /> -->
+
+    <!-- Make it fit -->
+    <img src={Icon} alt={`${name} logo`} style="width: 50px; height: 50px;" />
   {:else}
     <Icon />
   {/if}
   <div>{name}</div>
-</Label>
+</button>

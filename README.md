@@ -2,13 +2,37 @@
 
 A Sui wallet adapter for use with sveltekit and svelte 5.
 
+Requires `tailwindcss` and `shadcn-svelte`
+
 NOT tested
 
 NOT ready for production
 
 Currently hard-coded for devnet, and for Sui wallet
 
-## Examples
+## Getting started
+
+```
+npm install @builders-of-stuff/svelte-sui-wallet-adapter
+npm install bits-ui
+npx @svelte-add/tailwindcss@latest
+npx shadcn-svelte@latest init
+npx shadcn-svelte@latest add button
+npx shadcn-svelte@latest add dialog
+npx shadcn-svelte@latest add dropdown-menu
+```
+
+```
+// ../+page.svelte
+<script lang="ts">
+	import { ConnectButton, walletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+</script>
+
+
+<ConnectButton {walletAdapter} />
+```
+
+## Examples (old)
 
 https://github.com/KTruong008/sui-svelte-playground
 
