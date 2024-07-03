@@ -1,6 +1,6 @@
 {
   "name": "@builders-of-stuff/svelte-sui-wallet-adapter",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -13,7 +13,7 @@
     "dev": "vite dev",
     "build": "vite build && npm run package",
     "preview": "vite preview",
-    "packageCss": "postcss ./src/app.css -o ./dist/app.css",
+    "packageCss": "postcss ./dist/app.css -o ./dist/app.css",
     "package": "svelte-kit sync && svelte-package && publint && npm run packageCss",
     "prepublishOnly": "npm run package",
     "test": "npm run test:integration && npm run test:unit",
