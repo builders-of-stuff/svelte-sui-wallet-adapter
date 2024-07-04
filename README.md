@@ -4,9 +4,7 @@ A Sui wallet adapter for use with sveltekit and svelte 5.
 
 Requires `tailwindcss`
 
-NOT tested
-
-NOT ready for production
+NOT tested, NOT ready for production
 
 Currently hard-coded for devnet, and for Sui wallet
 
@@ -32,7 +30,8 @@ content: [
 ```
 
 ```
-// ../+page.svelte
+// +page.svelte
+
 <script lang="ts">
 	import { ConnectButton, walletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
 </script>
@@ -61,12 +60,4 @@ Once you've created a project and installed dependencies with `npm install` (or 
 npm run dev
 ```
 
-Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
-
-## Publishing
-
-```bash
-npm publish
-```
+Everything inside `src/lib` is part of the library, everything inside `src/routes` can be used as a showcase or preview app.
