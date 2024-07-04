@@ -13,6 +13,8 @@ Currently hard-coded for devnet, and for Sui wallet
 ```
 npm install @builders-of-stuff/svelte-sui-wallet-adapter
 npx @svelte-add/tailwindcss@latest
+npm install bits-ui
+npm install svelte-radix
 npx shadcn-svelte@latest init
 ```
 
