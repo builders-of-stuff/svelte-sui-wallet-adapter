@@ -52,7 +52,13 @@
           {/each}
         </div>
       {:else}
-        <WalletListItem name="Sui Wallet" icon={SuiIcon} isSelected />
+        <WalletListItem
+          name="Sui Wallet"
+          icon={SuiIcon}
+          isFirst={false}
+          isLast={false}
+          isSelected
+        />
       {/if}
     </Dialog.Description>
   </Dialog.Content>
