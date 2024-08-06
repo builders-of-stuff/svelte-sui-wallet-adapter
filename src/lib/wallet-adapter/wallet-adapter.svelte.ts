@@ -56,14 +56,14 @@ export function createWalletAdapter(
     // storageKey = DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner = false,
     autoConnect = false,
-    rpcUrl = getFullnodeUrl('devnet')
+    rpcUrl = getFullnodeUrl('mainnet')
   } = {
     wallets: getRegisteredWallets([SUI_WALLET_NAME]),
     // storage: localStorage,
     // storageKey: DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner: false,
     autoConnect: false,
-    rpcUrl: getFullnodeUrl('devnet')
+    rpcUrl: getFullnodeUrl('mainnet')
   }
 ): WalletAdapter {
   /**
@@ -244,7 +244,7 @@ export function createWalletAdapter(
    */
   const signTransaction = async (
     transaction: Transaction | string,
-    args: SignTransactionArgs
+    args: SignTransactionArgs = {}
   ): Promise<SignTransactionResult> => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
@@ -373,6 +373,30 @@ export function createWalletAdapter(
     reportTransactionEffects({ effects, account: signerAccount, chain });
 
     return result as any;
+  };
+
+  /**
+   * Execute transaction
+   */
+  const executeTransaction = async ({
+    bytes,
+    signature
+  }): Promise<ExecuteTransactionResult> => {
+    const { digest, rawEffects } = await suiClient.executeTransactionBlock({
+      transactionBlock: bytes,
+      signature,
+      options: {
+        showRawEffects: true
+      }
+    });
+
+    return {
+      digest,
+      rawEffects,
+      effects: toB64(new Uint8Array(rawEffects!)),
+      bytes,
+      signature
+    } as any;
   };
 
   /**
@@ -676,8 +700,23 @@ export function createWalletAdapter(
     signPersonalMessage,
     switchAccount,
     signTransactionBlock,
-    signAndExecuteTransactionBlock
+    signAndExecuteTransactionBlock,
+    executeTransaction
   };
 }
 
-export const walletAdapter = createWalletAdapter();
+export const walletAdapter = createWalletAdapter({
+  rpcUrl: getFullnodeUrl('mainnet')
+});
+
+export const devnetWalletAdapter = createWalletAdapter({
+  rpcUrl: getFullnodeUrl('devnet')
+});
+
+export const testnetWalletAdapter = createWalletAdapter({
+  rpcUrl: getFullnodeUrl('testnet')
+});
+
+export const localnetWalletAdapter = createWalletAdapter({
+  rpcUrl: getFullnodeUrl('localnet')
+});

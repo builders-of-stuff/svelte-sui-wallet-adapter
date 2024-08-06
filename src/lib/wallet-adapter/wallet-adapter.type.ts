@@ -117,6 +117,10 @@ export type WalletAdapterActions = {
   signAndExecuteTransactionBlock: (
     args: SignAndExecuteTransactionBlockArgs
   ) => Promise<SuiTransactionBlockResponse>;
+  executeTransaction: (args: {
+    bytes: string;
+    signature: string;
+  }) => Promise<ExecuteTransactionResult>;
 };
 
 export type WalletAdapter = {

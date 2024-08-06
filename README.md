@@ -4,10 +4,6 @@ A Sui wallet adapter for use with sveltekit and svelte 5.
 
 Requires `tailwindcss`
 
-NOT tested, NOT ready for production
-
-Currently hard-coded for devnet, and for Sui wallet
-
 ## Getting started
 
 ```
@@ -42,16 +38,9 @@ content: [
 <ConnectButton {walletAdapter} />
 ```
 
-## Examples (old)
-
-https://github.com/KTruong008/sui-svelte-playground
-
 ## Current known issues
 
-- Hard-coded for devnet
-
 - No local storage persistance
-
 - Switching wallets seems broken (must manually disconnect from app within wallet before connecting another account with same wallet — wallet thing?)
 
 ## Developing
