@@ -1,6 +1,6 @@
 {
   "name": "@builders-of-stuff/svelte-sui-wallet-adapter",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",

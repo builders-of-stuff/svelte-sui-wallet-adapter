@@ -308,18 +308,23 @@ export function createWalletAdapter(
     }) => Promise<ExecuteTransactionResult> =
       execute ??
       (async ({ bytes, signature }) => {
-        const { digest, rawEffects } = await suiClient.executeTransactionBlock({
-          transactionBlock: bytes,
-          signature,
-          options: {
-            showRawEffects: true
-          }
-        });
+        const { digest, rawEffects, effects, objectChanges } =
+          await suiClient.executeTransactionBlock({
+            transactionBlock: bytes,
+            signature,
+            options: {
+              showRawEffects: true,
+              showEffects: true,
+              showObjectChanges: true,
+              showEvents: true
+            }
+          });
 
         return {
           digest,
           rawEffects,
-          effects: toB64(new Uint8Array(rawEffects!)),
+          effects,
+          objectChanges,
           bytes,
           signature
         };
@@ -382,20 +387,35 @@ export function createWalletAdapter(
     bytes,
     signature
   }): Promise<ExecuteTransactionResult> => {
-    const { digest, rawEffects } = await suiClient.executeTransactionBlock({
+    const {
+      digest,
+      rawEffects,
+      effects,
+      objectChanges,
+      events,
+      timestampMs,
+      transaction
+    } = await suiClient.executeTransactionBlock({
       transactionBlock: bytes,
       signature,
       options: {
-        showRawEffects: true
+        showRawEffects: true,
+        showEffects: true,
+        showObjectChanges: true,
+        showEvents: true
       }
     });
 
     return {
-      digest,
       rawEffects,
-      effects: toB64(new Uint8Array(rawEffects!)),
       bytes,
-      signature
+      digest,
+      signature,
+      effects,
+      objectChanges,
+      events,
+      timestampMs,
+      transaction
     } as any;
   };
 
