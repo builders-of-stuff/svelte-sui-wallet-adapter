@@ -67,16 +67,17 @@ export interface SignTransactionResult extends SignedTransaction {
   reportTransactionEffects: (effects: string) => void;
 }
 
-export type ExecuteTransactionResult =
-  | {
-      digest: string;
-      rawEffects?: number[];
-    }
-  | {
-      effects?: {
-        bcs?: string;
-      };
-    };
+// export type ExecuteTransactionResult =
+//   | {
+//       digest: string;
+//       rawEffects?: number[];
+//     }
+//   | {
+//       effects?: {
+//         bcs?: string;
+//       };
+//     };
+export type ExecuteTransactionResult = any;
 
 export type SignTransactionBlockResult = SuiSignTransactionBlockOutput;
 

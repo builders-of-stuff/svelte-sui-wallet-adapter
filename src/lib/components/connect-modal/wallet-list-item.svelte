@@ -27,7 +27,11 @@
   }`}
 >
   {#if typeof Icon === 'string'}
-    <img src={Icon} alt={`${name} logo`} style="width: 50px; height: 50px;" />
+    <img
+      src={Icon}
+      alt={`${name} logo`}
+      class="h-12 w-12 rounded-lg transition-transform hover:scale-105"
+    />
   {:else}
     <Icon />
   {/if}
