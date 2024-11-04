@@ -42,6 +42,7 @@ content: [
 
 - No local storage persistance
 - Switching wallets seems broken (must manually disconnect from app within wallet before connecting another account with same wallet — wallet thing?)
+- Client-side only, probably doesn't work with ssr
 
 ## Developing
 
