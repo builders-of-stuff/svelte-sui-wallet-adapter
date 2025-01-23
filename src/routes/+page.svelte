@@ -1,5 +1,6 @@
 <script lang="ts">
-  import {  logWalletAdapterState, walletAdapter } from '$lib/index.js';
+  // import {  logWalletAdapterState, walletAdapter } from '$lib/index.js';
+  import {  logWalletAdapterState, devnetWalletAdapter as walletAdapter } from '$lib/index.js';
 
   /**
    * WalletProvider stuff (dapp-kit)
