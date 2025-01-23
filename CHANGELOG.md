@@ -1,3 +1,8 @@
+# 1.1.4 (2025-01-23)
+
+- Upgrade dependencies
+- Fix `formatAddress` bug
+
 # 1.1.3 (2024-10-28)
 
 - Upgrade `svelte` and `shadcn-svelte` dependencies to support `svelte 5`.
