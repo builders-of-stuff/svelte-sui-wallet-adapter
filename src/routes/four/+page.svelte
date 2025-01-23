@@ -1,6 +1,6 @@
 <script lang="ts">
   import ConnectButton from '$lib/components/connect-button/connect-button.svelte';
-  import { walletAdapter } from '$lib/index.js';
+  import { devnetWalletAdapter as walletAdapter } from '$lib/index.js';
 </script>
 
 <div>

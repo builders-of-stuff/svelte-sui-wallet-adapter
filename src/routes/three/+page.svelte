@@ -3,7 +3,7 @@
   import {
     getRegisteredWallets,
     logWalletAdapterState,
-    walletAdapter
+    devnetWalletAdapter as walletAdapter
   } from '$lib/index.js';
 
   export const MY_FIRST_PACKAGE_ID =

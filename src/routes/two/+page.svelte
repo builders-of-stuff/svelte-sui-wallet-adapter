@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { getRegisteredWallets, walletAdapter } from '$lib/index.js';
+  import {
+    getRegisteredWallets,
+    devnetWalletAdapter as walletAdapter
+  } from '$lib/index.js';
 </script>
 
 <a href="/">Home</a>

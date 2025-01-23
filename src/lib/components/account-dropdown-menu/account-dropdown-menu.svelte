@@ -15,7 +15,7 @@
   <DropdownMenu.Trigger>
     <Button>
       {walletAdapter?.currentAccount?.label ??
-        formatAddress(walletAdapter?.currentAccount?.label)}
+        formatAddress(walletAdapter?.currentAccount?.address)}
     </Button>
   </DropdownMenu.Trigger>
 

@@ -96,25 +96,25 @@
 <br />
 <br />
 
-<button on:click={handleConnectWallet}>Connect Wallet</button>
-<button on:click={handleDisconnectWallet}>Disconnect Wallet</button>
-<button on:click={() => logWalletAdapterState(walletAdapter)}>Log adapter state</button>
+<button onclick={handleConnectWallet}>Connect Wallet</button>
+<button onclick={handleDisconnectWallet}>Disconnect Wallet</button>
+<button onclick={() => logWalletAdapterState(walletAdapter)}>Log adapter state</button>
 
 <br />
 <br />
 
-<button on:click={handleWallets}>Wallets</button>
-<button on:click={handleAccounts}>Accounts</button>
-<button on:click={handleCurrentWallet}>Current Wallet</button>
-<button on:click={handleCurrentAccount}>Current Account</button>
-<button on:click={handleLastConnectedAccountAddress}
+<button onclick={handleWallets}>Wallets</button>
+<button onclick={handleAccounts}>Accounts</button>
+<button onclick={handleCurrentWallet}>Current Wallet</button>
+<button onclick={handleCurrentAccount}>Current Account</button>
+<button onclick={handleLastConnectedAccountAddress}
   >Last Connected Account Address</button
 >
-<button on:click={handleLastConnectedWalletName}>Last Connected Wallet Name</button>
-<button on:click={handleConnectionStatus}>Connection Status</button>
-<button on:click={handleIsConnected}>Is Connected</button>
-<button on:click={handleIsConnecting}>Is Connecting</button>
-<button on:click={handleIsDisconnected}>Is Disconnected</button>
+<button onclick={handleLastConnectedWalletName}>Last Connected Wallet Name</button>
+<button onclick={handleConnectionStatus}>Connection Status</button>
+<button onclick={handleIsConnected}>Is Connected</button>
+<button onclick={handleIsConnecting}>Is Connecting</button>
+<button onclick={handleIsDisconnected}>Is Disconnected</button>
 
 <div>
   <h2>Current wallet</h2>
