@@ -70,7 +70,7 @@ async function extractCSS() {
         --color-accent-foreground: #1f2937;
         --color-popover: #ffffff;
         --color-popover-foreground: #1f2937;
-        --color-border: #d1d5db;
+        --color-border: #e5e7eb;
         --color-background: #ffffff;
         --color-foreground: #1f2937;
       }
@@ -86,7 +86,7 @@ async function extractCSS() {
       .bg-popover { background-color: var(--color-popover); }
       .text-popover-foreground { color: var(--color-popover-foreground); }
       .border-primary { border-color: var(--color-primary); }
-      .border-muted { border-color: var(--color-muted-foreground); }
+      .border-muted { border-color: var(--color-border); }
       .border-border { border-color: var(--color-border); }
 
       .hover\\:bg-accent:hover { background-color: var(--color-accent); }
