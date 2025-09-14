@@ -111,13 +111,6 @@ export type WalletAdapterActions = {
     args: SignPersonalMessageArgs
   ) => Promise<SignPersonalMessageResult>;
   switchAccount: (account: WalletAccount) => void;
-  // Deprecated functions
-  signTransactionBlock: (
-    args: SignTransactionBlockArgs
-  ) => Promise<SignTransactionBlockResult>;
-  signAndExecuteTransactionBlock: (
-    args: SignAndExecuteTransactionBlockArgs
-  ) => Promise<SuiTransactionBlockResponse>;
   executeTransaction: (args: {
     bytes: string;
     signature: string;

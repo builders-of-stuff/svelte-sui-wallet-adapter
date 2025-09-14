@@ -7,7 +7,7 @@ import {
   getWallets,
   signTransaction as mystenSignTransaction
 } from '@mysten/wallet-standard';
-import { toB64 } from '@mysten/sui/utils';
+import { toBase64 } from '@mysten/sui/utils';
 import {
   SuiClient,
   getFullnodeUrl,
@@ -43,8 +43,8 @@ import { DEFAULT_PREFERRED_WALLETS } from './wallet-adapter.constant.js';
  *
  * @TODO Add support for persistance (localStorage?)
  * @TODO useUnsafeBurnerWallet
+ * @TODO useSlushWallet (seems redundant?)
  *
- * @TODO ConnectButton
  * @TODO Add support for more wallets
  */
 export function createWalletAdapter(
@@ -228,7 +228,7 @@ export function createWalletAdapter(
     if (reportTransactionEffectsFeature) {
       return await reportTransactionEffectsFeature.reportTransactionEffects({
         effects: Array.isArray(args?.effects)
-          ? toB64(new Uint8Array(args?.effects))
+          ? toBase64(new Uint8Array(args?.effects))
           : args?.effects,
         account: args?.account,
         chain: args?.chain ?? currentWallet?.chains[0]
@@ -335,7 +335,6 @@ export function createWalletAdapter(
     if (!signerAccount) {
       throw new Error('No wallet account is selected to sign the transaction with.');
     }
-    const chain = args.chain ?? signerAccount?.chains[0];
 
     if (
       !currentWallet.features['sui:signTransaction'] &&
@@ -344,6 +343,11 @@ export function createWalletAdapter(
       throw new Error("This wallet doesn't support the `signTransaction` feature.");
     }
 
+    if (typeof transaction !== 'string' && 'setSenderIfNotSet' in transaction) {
+      transaction.setSenderIfNotSet(signerAccount.address);
+    }
+
+    const chain = args.chain ?? `sui:${suiClient.network}`;
     const { signature, bytes } = await mystenSignTransaction(currentWallet, {
       ...args,
       transaction: {
@@ -357,7 +361,7 @@ export function createWalletAdapter(
         }
       },
       account: signerAccount,
-      chain: args.chain ?? signerAccount.chains[0]
+      chain
     });
 
     const result = await executeTransaction({ bytes, signature });
@@ -367,7 +371,7 @@ export function createWalletAdapter(
     if ('effects' in result && result.effects?.bcs) {
       effects = result.effects.bcs;
     } else if ('rawEffects' in result) {
-      effects = toB64(new Uint8Array(result.rawEffects!));
+      effects = toBase64(new Uint8Array(result.rawEffects!));
     } else {
       throw new Error('Could not parse effects from transaction result.');
     }
@@ -438,7 +442,8 @@ export function createWalletAdapter(
     if (signPersonalMessageFeature) {
       return await signPersonalMessageFeature.signPersonalMessage({
         ...signPersonalMessageArgs,
-        account: signerAccount
+        account: signerAccount,
+        chain: signPersonalMessageArgs.chain ?? `sui:${suiClient.network}`
       });
     }
 
@@ -480,103 +485,14 @@ export function createWalletAdapter(
   };
 
   /**
-   * Deprecated in favor of signTransaction
-   */
-  const signTransactionBlock = async (
-    signTransactionBlockArgs: SignTransactionBlockArgs
-  ): Promise<SignTransactionBlockResult> => {
-    if (!currentWallet) {
-      throw new Error('No wallet is connected.');
-    }
-
-    const signerAccount = signTransactionBlockArgs.account ?? currentAccount;
-    if (!signerAccount) {
-      throw new Error(
-        'No wallet account is selected to sign the transaction block with.'
-      );
-    }
-
-    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
-    if (!walletFeature) {
-      throw new Error(
-        "This wallet doesn't support the `SignTransactionBlock` feature."
-      );
-    }
-
-    return await walletFeature.signTransactionBlock({
-      transactionBlock: signTransactionBlockArgs.transactionBlock,
-      account: signerAccount,
-      chain: signTransactionBlockArgs.chain ?? signerAccount.chains[0]
-    });
-  };
-
-  /**
-   * Deprecated in favor of signAndExecuteTransaction
-   *
-   * @TODO Sui client integration with executeFromWallet prop
-   */
-  const signAndExecuteTransactionBlock = async (
-    signAndExecuteTransactionBlockArgs: SignAndExecuteTransactionBlockArgs,
-    executeFromWallet: boolean = false
-  ): Promise<SuiTransactionBlockResponse> => {
-    if (!currentWallet) {
-      throw new Error('No wallet is connected.');
-    }
-
-    const signerAccount = signAndExecuteTransactionBlockArgs.account ?? currentAccount;
-    if (!signerAccount) {
-      throw new Error(
-        'No wallet account is selected to sign and execute the transaction block with.'
-      );
-    }
-
-    if (executeFromWallet) {
-      const walletFeature =
-        currentWallet.features['sui:signAndExecuteTransactionBlock'];
-      if (!walletFeature) {
-        throw new Error(
-          "This wallet doesn't support the `signAndExecuteTransactionBlock` feature."
-        );
-      }
-
-      return walletFeature.signAndExecuteTransactionBlock({
-        ...signAndExecuteTransactionBlockArgs,
-        account: signerAccount,
-        chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0],
-        requestType: signAndExecuteTransactionBlockArgs.requestType,
-        options: signAndExecuteTransactionBlockArgs.options ?? {}
-      });
-    }
-
-    const walletFeature = currentWallet.features['sui:signTransactionBlock'];
-    if (!walletFeature) {
-      throw new Error(
-        "This wallet doesn't support the `signTransactionBlock` feature."
-      );
-    }
-
-    const { signature, transactionBlockBytes } =
-      await walletFeature.signTransactionBlock({
-        ...signAndExecuteTransactionBlockArgs,
-        account: signerAccount,
-        chain: signAndExecuteTransactionBlockArgs.chain ?? signerAccount.chains[0]
-      });
-
-    return suiClient.executeTransactionBlock({
-      transactionBlock: transactionBlockBytes,
-      signature,
-      requestType: signAndExecuteTransactionBlockArgs.requestType,
-      options: signAndExecuteTransactionBlockArgs.options ?? {}
-    });
-  };
-
-  /**
    * Effects
    *
    * $effect.root required for using $effect outside a component
    */
   $effect.root(() => {
-    // useWalletsChanged
+    /**
+     * useWalletsChanged
+     */
     $effect(() => {
       const walletsApi = getWallets();
       setWalletRegistered(getRegisteredWallets(DEFAULT_PREFERRED_WALLETS));
@@ -615,6 +531,11 @@ export function createWalletAdapter(
         unsubscribeFromEvents?.();
       };
     });
+
+    /**
+     * useSlushWallet (TODO)
+     */
+    // $effect(() => {});
 
     // useUnsafeBurnerWallet (TODO)
 
@@ -716,8 +637,6 @@ export function createWalletAdapter(
     signAndExecuteTransaction,
     signPersonalMessage,
     switchAccount,
-    signTransactionBlock,
-    signAndExecuteTransactionBlock,
     executeTransaction
   };
 }
