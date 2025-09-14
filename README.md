@@ -23,12 +23,14 @@ npm install @builders-of-stuff/svelte-sui-wallet-adapter
 Add the component styles to your app. You have two options:
 
 **Option 1: Import in your main layout or app file**
+
 ```js
 // src/app.html or src/routes/+layout.svelte
 import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 ```
 
 **Option 2: Import in your CSS file**
+
 ```css
 /* src/app.css */
 @import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
@@ -39,11 +41,38 @@ import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 ```svelte
 <!-- +page.svelte -->
 <script lang="ts">
-	import { ConnectButton, walletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+  import {
+    ConnectButton,
+    walletAdapter
+  } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+
+  // Example call
+  let example = await walletAdapter.signAndExecuteTransaction({
+    transaction: tx as any,
+    account: walletAdapter.currentAccount as any,
+    chain: walletAdapter!.currentAccount!.chains[0],
+    execute: async ({ bytes, signature }) =>
+      await walletAdapter.suiClient.executeTransactionBlock({
+        transactionBlock: bytes,
+        signature,
+        options: {
+          // Raw effects are required so the effects can be reported back to the wallet
+          showRawEffects: true,
+          // Select additional data to return
+          showObjectChanges: true
+        }
+      })
+  });
 </script>
 
 <ConnectButton {walletAdapter} />
 ```
+
+![Connect Button](docs/images/button.png)
+
+![Wallet Selection Modal](docs/images/modal.png)
+
+![Account Dropdown Menu](docs/images/dropdown.png)
 
 ## Current known issues
 
