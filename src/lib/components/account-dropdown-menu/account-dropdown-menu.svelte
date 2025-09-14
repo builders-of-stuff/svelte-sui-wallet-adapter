@@ -1,9 +1,9 @@
 <script lang="ts">
   import { formatAddress } from '@mysten/sui/utils';
 
-  import type { WalletAdapter } from '$lib/wallet-adapter/wallet-adapter.type.js';
-  import { Button } from '$lib/components/ui/button/index.js';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+  import type { WalletAdapter } from '../../wallet-adapter/wallet-adapter.type.js';
+  import { Button } from '../ui/button/index.js';
+  import * as DropdownMenu from '../ui/dropdown-menu/index.js';
 
   let { walletAdapter } = $props<{
     walletAdapter: WalletAdapter;

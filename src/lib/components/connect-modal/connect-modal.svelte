@@ -1,8 +1,8 @@
 <script lang="ts">
-  import * as Dialog from '$lib/components/ui/dialog/index.js';
-  import { Button } from '$lib/components/ui/button/index.js';
-  import type { WalletAdapter } from '$lib/wallet-adapter/wallet-adapter.type.js';
-  import { getWalletUniqueIdentifier } from '$lib/wallet-adapter/wallet-adapter-tools.js';
+  import * as Dialog from '../ui/dialog/index.js';
+  import { Button } from '../ui/button/index.js';
+  import type { WalletAdapter } from '../../wallet-adapter/wallet-adapter.type.js';
+  import { getWalletUniqueIdentifier } from '../../wallet-adapter/wallet-adapter-tools.js';
 
   import SuiIcon from '../icons/sui-icon.svelte';
   import WalletListItem from './wallet-list-item.svelte';

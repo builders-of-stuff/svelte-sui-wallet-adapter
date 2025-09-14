@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-	import { cn } from "$lib/shadcn-tools.js";
+	import { cn } from "../../../shadcn-tools.js";
 
 	let {
 		ref = $bindable(null),
