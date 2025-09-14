@@ -36,7 +36,19 @@ import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 @import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 ```
 
-### Usage
+### Usage examples
+
+```svelte
+<!-- +page.svelte -->
+<script lang="ts">
+  import {
+    ConnectButton,
+    walletAdapter
+  } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+</script>
+
+<ConnectButton {walletAdapter} />
+```
 
 ```svelte
 <!-- +page.svelte -->
@@ -46,8 +58,25 @@ import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
     walletAdapter
   } from '@builders-of-stuff/svelte-sui-wallet-adapter';
 
-  // Example call
-  let example = await walletAdapter.signAndExecuteTransaction({
+  // Access properties from walletAdapter
+  $effect(() => {
+    console.log(walletAdapter.currentAccount);
+    console.log(walletAdapter.isConnected);
+  });
+
+  // Invoke methods from walletAdapter
+  let response1 = walletAdapter.suiClient
+    .getOwnedObjects({
+      owner: walletAdapter.currentAccount ? walletAdapter.currentAccount.address : ''
+      // filter: {
+      //   StructType: `${MY_FIRST_PACKAGE_ID}::my_module::Counter`
+      // }
+    })
+    .then((res) => {
+      console.log('res: ', res);
+    });
+
+  let response2 = await walletAdapter.signAndExecuteTransaction({
     transaction: tx as any,
     account: walletAdapter.currentAccount as any,
     chain: walletAdapter!.currentAccount!.chains[0],
