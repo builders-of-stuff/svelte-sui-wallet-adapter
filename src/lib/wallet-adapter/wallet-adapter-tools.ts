@@ -4,15 +4,13 @@ import type {
   MinimallyRequiredFeatures,
   WalletAccount
 } from '@mysten/wallet-standard';
+import { SLUSH_WALLET_NAME } from '@mysten/slush-wallet';
 import { getWallets, isWalletWithRequiredFeatureSet } from '@mysten/wallet-standard';
 
-import {
-  DEFAULT_REQUIRED_FEATURES,
-  SUI_WALLET_NAME
-} from './wallet-adapter.constant.js';
+import { DEFAULT_REQUIRED_FEATURES } from './wallet-adapter.constant.js';
 
 export const getRegisteredWallets = (
-  preferredWallets: string[] = [SUI_WALLET_NAME]
+  preferredWallets: string[] = [SLUSH_WALLET_NAME]
 ) => {
   const walletsApi = getWallets();
   const wallets = walletsApi.get();

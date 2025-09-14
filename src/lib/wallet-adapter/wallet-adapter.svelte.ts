@@ -14,6 +14,7 @@ import {
   type SuiTransactionBlockResponse
 } from '@mysten/sui/client';
 import type { Transaction } from '@mysten/sui/transactions';
+import { SLUSH_WALLET_NAME } from '@mysten/slush-wallet';
 
 import {
   getRegisteredWallets,
@@ -35,10 +36,7 @@ import type {
   WalletAdapter,
   WalletConnectionStatus
 } from './wallet-adapter.type.js';
-import {
-  DEFAULT_PREFERRED_WALLETS,
-  SUI_WALLET_NAME
-} from './wallet-adapter.constant.js';
+import { DEFAULT_PREFERRED_WALLETS } from './wallet-adapter.constant.js';
 
 /**
  * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
@@ -51,14 +49,14 @@ import {
  */
 export function createWalletAdapter(
   {
-    wallets: _wallets = getRegisteredWallets([SUI_WALLET_NAME]),
+    wallets: _wallets = getRegisteredWallets([SLUSH_WALLET_NAME]),
     // storage = localStorage,
     // storageKey = DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner = false,
     autoConnect = false,
     rpcUrl = getFullnodeUrl('mainnet')
   } = {
-    wallets: getRegisteredWallets([SUI_WALLET_NAME]),
+    wallets: getRegisteredWallets([SLUSH_WALLET_NAME]),
     // storage: localStorage,
     // storageKey: DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner: false,
