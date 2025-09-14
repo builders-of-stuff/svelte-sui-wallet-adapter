@@ -33,7 +33,9 @@
       class="h-12 w-12 rounded-lg transition-transform hover:scale-105"
     />
   {:else}
-    <Icon />
+    <div class="h-12 w-12 flex items-center justify-center rounded-lg overflow-hidden [&_svg]:w-full [&_svg]:h-full [&_svg]:max-w-12 [&_svg]:max-h-12">
+      <Icon />
+    </div>
   {/if}
   <div>{name}</div>
 </button>
