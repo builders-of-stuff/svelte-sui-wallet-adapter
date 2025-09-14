@@ -1,6 +1,6 @@
 {
   "name": "@builders-of-stuff/svelte-sui-wallet-adapter",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -13,7 +13,7 @@
     "dev": "vite dev",
     "build": "vite build && pnpm run package",
     "preview": "vite preview",
-    "package": "svelte-kit sync && svelte-package && publint",
+    "package": "svelte-kit sync && svelte-package && node scripts/extract-css.js && publint",
     "prepublishOnly": "pnpm run package",
     "test": "pnpm run test:integration && pnpm run test:unit",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -27,7 +27,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "svelte": "./dist/index.js"
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
     "dist",

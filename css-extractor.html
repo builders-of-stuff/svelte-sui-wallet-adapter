@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Extractor</title>
+</head>
+<body>
+    <!-- This file is used to extract all Tailwind classes used by the components -->
+
+    <!-- wallet-list-item classes -->
+    <div class="flex items-center justify-start gap-4 rounded-t-md rounded-b-md rounded-none border border-primary border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground border-t-0">
+        <img class="h-12 w-12 rounded-lg transition-transform hover:scale-105" />
+        <div class="h-12 w-12 flex items-center justify-center rounded-lg overflow-hidden [&_svg]:w-full [&_svg]:h-full [&_svg]:max-w-12 [&_svg]:max-h-12"></div>
+    </div>
+
+    <!-- connect-modal classes -->
+    <div class="flex flex-col"></div>
+
+    <!-- button classes -->
+    <button class="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3"></button>
+
+    <!-- dialog classes -->
+    <div class="z-50 bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-lg md:w-full data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed left-[50%] top-[50%] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border sm:max-w-[425px]"></div>
+    <div class="flex flex-col space-y-1.5 text-center sm:text-left"></div>
+    <div class="font-semibold leading-none tracking-tight text-lg"></div>
+    <div class="text-sm text-muted-foreground"></div>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"></div>
+    <div class="fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"></div>
+
+    <!-- dropdown-menu classes -->
+    <div class="min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50"></div>
+    <div class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"></div>
+    <div class="px-2 py-1.5 text-sm font-semibold"></div>
+    <div class="-mx-1 my-1 h-px bg-muted"></div>
+    <div class="ml-auto text-xs tracking-widest opacity-60"></div>
+</body>
+</html>

@@ -2,46 +2,51 @@
 
 A Sui wallet adapter for use with sveltekit and svelte 5.
 
-Requires `tailwindcss`
+Requires `tailwindcss 4+` and `shadcn-svelte`.
 
 ## Getting started
 
-```
+```bash
+pnpm dlx @svelte-add/tailwindcss@latest
+pnpm dlx shadcn-svelte@latest init
+pnpm install bits-ui
+
+pnpm dlx shadcn-svelte@latest add button
+pnpm dlx shadcn-svelte@latest add dialog
+pnpm dlx shadcn-svelte@latest add dropdown-menu
+
 npm install @builders-of-stuff/svelte-sui-wallet-adapter
-npx @svelte-add/tailwindcss@latest
-npm install bits-ui
-npm install svelte-radix
-npx shadcn-svelte@latest init
 ```
 
-```
-// tailwind.css.ts
+### Import the CSS
 
-const config = {
-...
-content: [
-	'./src/**/*.{html,js,svelte,ts}',
-	'./node_modules/@builders-of-stuff/svelte-sui-wallet-adapter/**/*.{html,js,svelte,ts}'
-],
-...
-}
+Add the component styles to your app. You have two options:
+
+**Option 1: Import in your main layout or app file**
+```js
+// src/app.html or src/routes/+layout.svelte
+import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 ```
 
+**Option 2: Import in your CSS file**
+```css
+/* src/app.css */
+@import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 ```
-// +page.svelte
 
+### Usage
+
+```svelte
+<!-- +page.svelte -->
 <script lang="ts">
 	import { ConnectButton, walletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
 </script>
-
 
 <ConnectButton {walletAdapter} />
 ```
 
 ## Current known issues
 
-- No local storage persistance
-- Switching wallets seems broken (must manually disconnect from app within wallet before connecting another account with same wallet — wallet thing?)
 - Client-side only, probably doesn't work with ssr
 
 ## Developing
