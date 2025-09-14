@@ -167,9 +167,8 @@ export function createWalletAdapter(
         silent
       });
 
-      const connectedSuiAccounts = connectResult?.accounts?.filter?.(
-        (account) =>
-          account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
+      const connectedSuiAccounts = connectResult?.accounts?.filter?.((account) =>
+        account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
       );
 
       const selectedAccount = getSelectedAccount(

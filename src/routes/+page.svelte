@@ -1,6 +1,9 @@
 <script lang="ts">
   // import {  logWalletAdapterState, walletAdapter } from '$lib/index.js';
-  import {  logWalletAdapterState, devnetWalletAdapter as walletAdapter } from '$lib/index.js';
+  import {
+    logWalletAdapterState,
+    devnetWalletAdapter as walletAdapter
+  } from '$lib/index.js';
 
   /**
    * WalletProvider stuff (dapp-kit)
@@ -9,7 +12,7 @@
    * Playground
    */
   const handleConnectWallet = async () => {
-     await walletAdapter.connectWallet();
+    await walletAdapter.connectWallet();
   };
 
   const handleDisconnectWallet = async () => {
@@ -56,7 +59,6 @@
     let IsDisconnected = walletAdapter.isDisconnected;
     console.log('IsDisconnected: ', IsDisconnected);
   };
-
 </script>
 
 {#snippet walletDisplay(wallet)}
