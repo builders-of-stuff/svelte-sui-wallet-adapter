@@ -15,7 +15,7 @@ pnpm dlx shadcn-svelte@latest add button
 pnpm dlx shadcn-svelte@latest add dialog
 pnpm dlx shadcn-svelte@latest add dropdown-menu
 
-npm install @builders-of-stuff/svelte-sui-wallet-adapter
+pnpm install @builders-of-stuff/svelte-sui-wallet-adapter
 ```
 
 ### Import the CSS
