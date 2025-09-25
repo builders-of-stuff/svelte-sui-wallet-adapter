@@ -19,6 +19,11 @@ import type {
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
+export interface SlushWalletConfig {
+  name: string;
+  origin?: string;
+}
+
 /**
  * Args
  */

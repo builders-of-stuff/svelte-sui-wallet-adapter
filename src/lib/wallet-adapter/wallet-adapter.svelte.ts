@@ -14,7 +14,7 @@ import {
   type SuiTransactionBlockResponse
 } from '@mysten/sui/client';
 import type { Transaction } from '@mysten/sui/transactions';
-import { SLUSH_WALLET_NAME } from '@mysten/slush-wallet';
+import { SLUSH_WALLET_NAME, registerSlushWallet } from '@mysten/slush-wallet';
 
 import {
   getRegisteredWallets,
@@ -33,6 +33,7 @@ import type {
   SignTransactionBlockArgs,
   SignTransactionBlockResult,
   SignTransactionResult,
+  SlushWalletConfig,
   WalletAdapter,
   WalletConnectionStatus
 } from './wallet-adapter.type.js';
@@ -54,7 +55,13 @@ export function createWalletAdapter(
     // storageKey = DEFAULT_STORAGE_KEY,
     // enableUnsafeBurner = false,
     autoConnect = false,
-    rpcUrl = getFullnodeUrl('mainnet')
+    rpcUrl = getFullnodeUrl('mainnet'),
+    slushWallet
+  }: {
+    wallets?: any[];
+    autoConnect?: boolean;
+    rpcUrl?: string;
+    slushWallet?: SlushWalletConfig;
   } = {
     wallets: getRegisteredWallets([SLUSH_WALLET_NAME]),
     // storage: localStorage,
@@ -533,9 +540,35 @@ export function createWalletAdapter(
     });
 
     /**
-     * useSlushWallet (TODO)
+     * useSlushWallet
      */
-    // $effect(() => {});
+    $effect(() => {
+      if (!slushWallet?.name) {
+        return;
+      }
+
+      let cleanup: (() => void) | undefined;
+      let isMounted = true;
+
+      try {
+        const result = registerSlushWallet(slushWallet.name, {
+          origin: slushWallet.origin,
+        });
+
+        if (isMounted && result) {
+          cleanup = result.unregister;
+        } else if (result) {
+          result.unregister();
+        }
+      } catch (error) {
+        console.error('Failed to register Slush wallet:', error);
+      }
+
+      return () => {
+        isMounted = false;
+        if (cleanup) cleanup();
+      };
+    });
 
     // useUnsafeBurnerWallet (TODO)
 
