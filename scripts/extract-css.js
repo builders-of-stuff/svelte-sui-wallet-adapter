@@ -5,9 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Import Tailwind CSS functions
-import postcss from 'postcss';
-import tailwindcss from '@tailwindcss/postcss';
+// Note: PostCSS imports removed as we're using static CSS
 
 async function extractCSS() {
   console.log('🎨 Extracting CSS for component library...');
