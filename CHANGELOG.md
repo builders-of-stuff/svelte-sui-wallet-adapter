@@ -1,3 +1,7 @@
+# 2.1.0 (2025-09-26)
+
+- Add `registerSlushWallet` support
+
 # 1.1.4 (2025-01-23)
 
 - Upgrade dependencies
