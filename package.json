@@ -48,7 +48,7 @@
     "@mysten/wallet-standard": "^0.20.3"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.28.1",
     "@sveltejs/adapter-auto": "^6.1.0",
     "@sveltejs/kit": "^2.39.1",

@@ -135,12 +135,6 @@ OS color scheme automatically (via `light-dark()`). Override any token globally:
 To force a scheme instead of following the OS, set `color-scheme: light` (or `dark`)
 on an ancestor element.
 
-![Connect Button](docs/images/button.png)
-
-![Wallet Selection Modal](docs/images/modal.png)
-
-![Account Dropdown Menu](docs/images/dropdown.png)
-
 ## Migrating from v2
 
 v3 is a major overhaul:
