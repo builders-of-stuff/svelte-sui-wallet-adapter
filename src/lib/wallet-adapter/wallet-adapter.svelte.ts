@@ -1,87 +1,76 @@
 import { untrack } from 'svelte';
 import type {
   WalletAccount,
-  WalletWithRequiredFeatures
+  WalletWithRequiredFeatures,
+  SuiSignAndExecuteTransactionOutput
 } from '@mysten/wallet-standard';
 import {
   getWallets,
-  signTransaction as mystenSignTransaction
+  signTransaction as standardSignTransaction,
+  signAndExecuteTransaction as standardSignAndExecuteTransaction
 } from '@mysten/wallet-standard';
-import { toBase64 } from '@mysten/sui/utils';
+import { fromBase64 } from '@mysten/sui/utils';
+import { SuiGrpcClient } from '@mysten/sui/grpc';
 import {
-  SuiClient,
-  getFullnodeUrl,
-  type SuiTransactionBlockResponse
+  extractStatusFromEffectsBcs,
+  parseTransactionEffectsBcs
 } from '@mysten/sui/client';
 import type { Transaction } from '@mysten/sui/transactions';
-import { SLUSH_WALLET_NAME, registerSlushWallet } from '@mysten/slush-wallet';
+import { registerSlushWallet } from '@mysten/slush-wallet';
 
 import {
   getRegisteredWallets,
   getSelectedAccount,
   getWalletUniqueIdentifier
 } from './wallet-adapter-tools.js';
+import {
+  clearAccountFromStorage,
+  getDefaultStorage,
+  readAccountFromStorage,
+  sanitizeWalletId,
+  saveAccountToStorage
+} from './wallet-adapter-storage.js';
 import type {
+  ConnectWalletArgs,
+  CreateWalletAdapterOptions,
   ExecuteTransactionResult,
-  ReportTransactionEffectsArgs,
   SignAndExecuteTransactionArgs,
-  SignAndExecuteTransactionBlockArgs,
   SignAndExecuteTransactionResult,
   SignPersonalMessageArgs,
   SignPersonalMessageResult,
   SignTransactionArgs,
-  SignTransactionBlockArgs,
-  SignTransactionBlockResult,
   SignTransactionResult,
-  SlushWalletConfig,
   WalletAdapter,
   WalletConnectionStatus
 } from './wallet-adapter.type.js';
-import { DEFAULT_PREFERRED_WALLETS } from './wallet-adapter.constant.js';
+import {
+  DEFAULT_PREFERRED_WALLETS,
+  DEFAULT_STORAGE_KEY,
+  getGrpcFullnodeUrl
+} from './wallet-adapter.constant.js';
 
 /**
- * Mostly ported logic from sui/sdk/dapp-kit/src/components/WalletProvider.tsx
+ * Mostly ported logic from Mysten's dapp-kit (WalletProvider / dapp-kit-core).
  *
- * @TODO Add support for persistance (localStorage?)
  * @TODO useUnsafeBurnerWallet
- * @TODO useSlushWallet (seems redundant?)
- *
- * @TODO Add support for more wallets
  */
-export function createWalletAdapter(
-  {
-    wallets: _wallets = getRegisteredWallets([SLUSH_WALLET_NAME]),
-    // storage = localStorage,
-    // storageKey = DEFAULT_STORAGE_KEY,
-    // enableUnsafeBurner = false,
-    autoConnect = false,
-    rpcUrl = getFullnodeUrl('mainnet'),
-    slushWallet
-  }: {
-    wallets?: any[];
-    autoConnect?: boolean;
-    rpcUrl?: string;
-    slushWallet?: SlushWalletConfig;
-  } = {
-    wallets: getRegisteredWallets([SLUSH_WALLET_NAME]),
-    // storage: localStorage,
-    // storageKey: DEFAULT_STORAGE_KEY,
-    // enableUnsafeBurner: false,
-    autoConnect: false,
-    rpcUrl: getFullnodeUrl('mainnet')
-  }
-): WalletAdapter {
+export function createWalletAdapter({
+  network = 'mainnet',
+  baseUrl = getGrpcFullnodeUrl(network),
+  autoConnect = true,
+  storage = getDefaultStorage(),
+  storageKey = DEFAULT_STORAGE_KEY,
+  preferredWallets = DEFAULT_PREFERRED_WALLETS,
+  slushWallet
+}: CreateWalletAdapterOptions = {}): WalletAdapter {
+  const suiClient = new SuiGrpcClient({ network, baseUrl });
+  const defaultChain = `sui:${network}` as const;
+
   /**
    * State
    */
-  const suiClient = $state(
-    new SuiClient({
-      url: rpcUrl
-    })
-  );
-
   const autoConnectEnabled = $state(autoConnect);
-  let wallets = $state(_wallets);
+  let wallets = $state(getRegisteredWallets(preferredWallets));
   let accounts = $state([] as WalletAccount[]);
   let currentWallet = $state(null as WalletWithRequiredFeatures | null);
   let currentAccount = $state(null as WalletAccount | null);
@@ -95,6 +84,7 @@ export function createWalletAdapter(
    */
   const isConnected = $derived(connectionStatus === 'connected');
   const isConnecting = $derived(connectionStatus === 'connecting');
+  const isReconnecting = $derived(connectionStatus === 'reconnecting');
   const isDisconnected = $derived(connectionStatus === 'disconnected');
 
   /**
@@ -105,18 +95,28 @@ export function createWalletAdapter(
   };
 
   const setWalletConnected = (
-    wallet,
-    connectedAccounts,
-    selectedAccounts,
-    _supportedIntents = []
+    wallet: WalletWithRequiredFeatures,
+    connectedAccounts: readonly WalletAccount[],
+    selectedAccount: WalletAccount | null,
+    _supportedIntents: string[] = []
   ) => {
-    accounts = connectedAccounts;
+    accounts = connectedAccounts as WalletAccount[];
     currentWallet = wallet;
-    currentAccount = selectedAccounts;
+    currentAccount = selectedAccount;
     lastConnectedWalletName = getWalletUniqueIdentifier(wallet);
-    lastConnectedAccountAddress = selectedAccounts?.address;
+    lastConnectedAccountAddress = selectedAccount?.address ?? null;
     connectionStatus = 'connected';
     supportedIntents = _supportedIntents;
+
+    if (selectedAccount) {
+      saveAccountToStorage(
+        storage,
+        storageKey,
+        getWalletUniqueIdentifier(wallet),
+        selectedAccount.address,
+        _supportedIntents
+      );
+    }
   };
 
   const setWalletDisconnected = () => {
@@ -127,34 +127,52 @@ export function createWalletAdapter(
     lastConnectedAccountAddress = null;
     connectionStatus = 'disconnected';
     supportedIntents = [];
+    clearAccountFromStorage(storage, storageKey);
   };
 
-  const setAccountSwitched = (selectedAccount) => {
+  const setAccountSwitched = (selectedAccount: WalletAccount) => {
     currentAccount = selectedAccount;
-    lastConnectedAccountAddress = selectedAccount?.address;
-  };
+    lastConnectedAccountAddress = selectedAccount?.address ?? null;
 
-  const setWalletRegistered = (updatedWallets) => {
-    wallets = updatedWallets;
-  };
-
-  const setWalletUnregistered = (updatedWallets, unregisteredWallet) => {
-    if (unregisteredWallet === currentWallet) {
-      wallets = updatedWallets;
-      setWalletDisconnected();
-    } else {
-      wallets = updatedWallets;
+    if (currentWallet && selectedAccount) {
+      saveAccountToStorage(
+        storage,
+        storageKey,
+        getWalletUniqueIdentifier(currentWallet),
+        selectedAccount.address,
+        supportedIntents
+      );
     }
   };
 
-  const updateWalletAccounts = (updatedAccounts) => {
-    accounts = updatedAccounts;
-    currentAccount =
+  const updateWalletAccounts = (updatedAccounts: readonly WalletAccount[]) => {
+    accounts = updatedAccounts as WalletAccount[];
+
+    const resolvedAccount =
       (currentAccount &&
-        updatedAccounts?.find?.(
-          ({ address }) => address === currentAccount?.address
-        )) ||
-      updatedAccounts?.[0];
+        updatedAccounts.find(({ address }) => address === currentAccount?.address)) ||
+      updatedAccounts[0] ||
+      null;
+
+    if (resolvedAccount && resolvedAccount !== currentAccount) {
+      setAccountSwitched(resolvedAccount);
+    } else if (!resolvedAccount) {
+      currentAccount = null;
+    }
+  };
+
+  /**
+   * Wallets aren't required to implement sui:getCapabilities, and connect results
+   * only started including supportedIntents recently, so probe defensively.
+   */
+  const getSupportedIntents = async (wallet: WalletWithRequiredFeatures) => {
+    try {
+      const capabilities =
+        await wallet.features['sui:getCapabilities']?.getCapabilities();
+      return capabilities?.supportedIntents ?? [];
+    } catch {
+      return [];
+    }
   };
 
   /**
@@ -164,28 +182,38 @@ export function createWalletAdapter(
     wallet = wallets?.[0],
     accountAddress = lastConnectedAccountAddress,
     silent = false
-  } = {}) {
+  }: ConnectWalletArgs = {}) {
+    if (!wallet) {
+      throw new Error('No wallets available to connect to.');
+    }
+
+    const wasConnected = connectionStatus === 'connected';
+
     try {
-      setConnectionStatus('connecting');
-      const connectResult = await wallet?.features?.['standard:connect']?.connect?.({
-        // pops up connect modal
+      setConnectionStatus(wasConnected ? 'reconnecting' : 'connecting');
+
+      const connectResult = await wallet.features['standard:connect'].connect({
+        // silent: true restores an existing authorization without popping up the wallet
         silent
       });
 
-      const connectedSuiAccounts = connectResult?.accounts?.filter?.((account) =>
-        account?.chains?.some?.((chain) => chain?.split?.(':')?.[0] === 'sui')
+      const connectedSuiAccounts = connectResult.accounts.filter((account) =>
+        account.chains.some((chain) => chain.split(':')[0] === 'sui')
       );
 
       const selectedAccount = getSelectedAccount(
         connectedSuiAccounts,
-        accountAddress || (lastConnectedAccountAddress as any)
+        accountAddress ?? undefined
       );
 
-      setWalletConnected(wallet, connectedSuiAccounts, selectedAccount);
+      const intents =
+        connectResult.supportedIntents ?? (await getSupportedIntents(wallet));
+
+      setWalletConnected(wallet, connectedSuiAccounts, selectedAccount, intents);
 
       return { accounts: connectedSuiAccounts };
     } catch (error) {
-      setConnectionStatus('disconnected');
+      setConnectionStatus(wasConnected ? 'connected' : 'disconnected');
       throw error;
     }
   }
@@ -202,9 +230,7 @@ export function createWalletAdapter(
       // Wallets aren't required to implement the disconnect feature, so we'll
       // optionally call the disconnect feature if it exists and reset the UI
       // state on the frontend at a minimum.
-      await currentWallet.features['standard:disconnect']?.disconnect()?.then?.(() => {
-        setWalletDisconnected();
-      });
+      await currentWallet.features['standard:disconnect']?.disconnect();
     } catch (error) {
       console.error(
         'Failed to disconnect the application from the current wallet.',
@@ -216,31 +242,30 @@ export function createWalletAdapter(
   }
 
   /**
-   * Report transaction effects
+   * Switch account
    */
-  const reportTransactionEffects = async (args: ReportTransactionEffectsArgs) => {
+  const switchAccount = async (account: WalletAccount) => {
     if (!currentWallet) {
       throw new Error('No wallet is connected.');
     }
 
-    if (!args.account) {
+    const accountToSelect = currentWallet.accounts.find(
+      (walletAccount) => walletAccount.address === account.address
+    );
+    if (!accountToSelect) {
       throw new Error(
-        'No wallet account is selected to report transaction effects for'
+        `No account with address ${account?.address} is connected to ${currentWallet?.name}.`
       );
     }
 
-    const reportTransactionEffectsFeature =
-      currentWallet.features['sui:reportTransactionEffects'];
+    setAccountSwitched(accountToSelect);
+  };
 
-    if (reportTransactionEffectsFeature) {
-      return await reportTransactionEffectsFeature.reportTransactionEffects({
-        effects: Array.isArray(args?.effects)
-          ? toBase64(new Uint8Array(args?.effects))
-          : args?.effects,
-        account: args?.account,
-        chain: args?.chain ?? currentWallet?.chains[0]
-      });
-    }
+  /**
+   * Switch wallet (connects to the new wallet, replacing the current connection)
+   */
+  const switchWallet = (wallet: WalletWithRequiredFeatures) => {
+    return connectWallet({ wallet, accountAddress: null });
   };
 
   /**
@@ -266,99 +291,10 @@ export function createWalletAdapter(
       throw new Error("This wallet doesn't support the `signTransaction` feature.");
     }
 
-    const { bytes, signature } = await mystenSignTransaction(currentWallet, {
+    const { bytes, signature } = await standardSignTransaction(currentWallet, {
       ...args,
       transaction: {
         toJSON: async () => {
-          return typeof transaction === 'string'
-            ? transaction
-            : await transaction.toJSON({
-                supportedIntents: [],
-                client: suiClient
-              });
-        }
-      },
-      account: signerAccount,
-      chain: args.chain ?? signerAccount.chains[0]
-    });
-
-    return {
-      bytes,
-      signature,
-      reportTransactionEffects: (effects) => {
-        reportTransactionEffects({
-          effects,
-          account: signerAccount,
-          chain: args.chain ?? signerAccount.chains[0]
-        });
-      }
-    };
-  };
-
-  /**
-   * Sign & execute transaction
-   */
-  const signAndExecuteTransaction = async ({
-    transaction,
-    execute,
-    ...args
-  }: SignAndExecuteTransactionArgs): Promise<SignAndExecuteTransactionResult> => {
-    const executeTransaction: ({
-      bytes,
-      signature
-    }: {
-      bytes: string;
-      signature: string;
-    }) => Promise<ExecuteTransactionResult> =
-      execute ??
-      (async ({ bytes, signature }) => {
-        const { digest, rawEffects, effects, objectChanges } =
-          await suiClient.executeTransactionBlock({
-            transactionBlock: bytes,
-            signature,
-            options: {
-              showRawEffects: true,
-              showEffects: true,
-              showObjectChanges: true,
-              showEvents: true
-            }
-          });
-
-        return {
-          digest,
-          rawEffects,
-          effects,
-          objectChanges,
-          bytes,
-          signature
-        };
-      });
-
-    if (!currentWallet) {
-      throw new Error('No wallet is connected.');
-    }
-
-    const signerAccount = args.account ?? currentAccount;
-    if (!signerAccount) {
-      throw new Error('No wallet account is selected to sign the transaction with.');
-    }
-
-    if (
-      !currentWallet.features['sui:signTransaction'] &&
-      !currentWallet.features['sui:signTransactionBlock']
-    ) {
-      throw new Error("This wallet doesn't support the `signTransaction` feature.");
-    }
-
-    if (typeof transaction !== 'string' && 'setSenderIfNotSet' in transaction) {
-      transaction.setSenderIfNotSet(signerAccount.address);
-    }
-
-    const chain = args.chain ?? `sui:${suiClient.network}`;
-    const { signature, bytes } = await mystenSignTransaction(currentWallet, {
-      ...args,
-      transaction: {
-        async toJSON() {
           return typeof transaction === 'string'
             ? transaction
             : await transaction.toJSON({
@@ -368,63 +304,140 @@ export function createWalletAdapter(
         }
       },
       account: signerAccount,
-      chain
+      chain: args.chain ?? defaultChain
     });
 
-    const result = await executeTransaction({ bytes, signature });
-
-    let effects: string;
-
-    if ('effects' in result && result.effects?.bcs) {
-      effects = result.effects.bcs;
-    } else if ('rawEffects' in result) {
-      effects = toBase64(new Uint8Array(result.rawEffects!));
-    } else {
-      throw new Error('Could not parse effects from transaction result.');
-    }
-
-    reportTransactionEffects({ effects, account: signerAccount, chain });
-
-    return result as any;
+    return { bytes, signature };
   };
 
   /**
-   * Execute transaction
+   * Builds a SuiClientTypes.TransactionResult from what the wallet returns from
+   * sui:signAndExecuteTransaction, without an extra RPC roundtrip.
+   */
+  const transactionResultFromWalletOutput = (
+    output: SuiSignAndExecuteTransactionOutput
+  ): SignAndExecuteTransactionResult => {
+    const effectsBytes = fromBase64(output.effects);
+    const status = extractStatusFromEffectsBcs(effectsBytes);
+
+    const transaction = {
+      digest: output.digest,
+      signatures: [output.signature],
+      epoch: null,
+      status,
+      effects: parseTransactionEffectsBcs(effectsBytes),
+      balanceChanges: undefined,
+      events: undefined,
+      objectTypes: undefined,
+      transaction: undefined,
+      bcs: undefined
+    };
+
+    return (
+      status.success
+        ? { $kind: 'Transaction', Transaction: transaction }
+        : { $kind: 'FailedTransaction', FailedTransaction: transaction }
+    ) as SignAndExecuteTransactionResult;
+  };
+
+  /**
+   * Sign & execute transaction
+   *
+   * Prefers wallet-side execution (sui:signAndExecuteTransaction) when available;
+   * otherwise signs locally and executes via the adapter's gRPC client (or a
+   * custom `execute` function).
+   */
+  const signAndExecuteTransaction = async ({
+    transaction,
+    execute,
+    ...args
+  }: SignAndExecuteTransactionArgs): Promise<SignAndExecuteTransactionResult> => {
+    if (!currentWallet) {
+      throw new Error('No wallet is connected.');
+    }
+
+    const signerAccount = args.account ?? currentAccount;
+    if (!signerAccount) {
+      throw new Error('No wallet account is selected to sign the transaction with.');
+    }
+
+    if (typeof transaction !== 'string' && 'setSenderIfNotSet' in transaction) {
+      transaction.setSenderIfNotSet(signerAccount.address);
+    }
+
+    const chain = args.chain ?? defaultChain;
+    const transactionWrapper = {
+      toJSON: async () => {
+        return typeof transaction === 'string'
+          ? transaction
+          : await transaction.toJSON({
+              supportedIntents,
+              client: suiClient
+            });
+      }
+    };
+
+    const walletCanExecute =
+      currentWallet.features['sui:signAndExecuteTransaction'] ||
+      currentWallet.features['sui:signAndExecuteTransactionBlock'];
+
+    if (!execute && walletCanExecute) {
+      const result = await standardSignAndExecuteTransaction(currentWallet, {
+        ...args,
+        transaction: transactionWrapper,
+        account: signerAccount,
+        chain
+      });
+
+      return transactionResultFromWalletOutput(result);
+    }
+
+    if (
+      !currentWallet.features['sui:signTransaction'] &&
+      !currentWallet.features['sui:signTransactionBlock']
+    ) {
+      throw new Error("This wallet doesn't support the `signTransaction` feature.");
+    }
+
+    const { bytes, signature } = await standardSignTransaction(currentWallet, {
+      ...args,
+      transaction: transactionWrapper,
+      account: signerAccount,
+      chain
+    });
+
+    const result = await (execute ?? executeTransaction)({ bytes, signature });
+
+    return result as SignAndExecuteTransactionResult;
+  };
+
+  /**
+   * Execute transaction (pre-signed bytes) via the adapter's gRPC client
    */
   const executeTransaction = async ({
     bytes,
     signature
+  }: {
+    bytes: string;
+    signature: string;
   }): Promise<ExecuteTransactionResult> => {
-    const {
-      digest,
-      rawEffects,
-      effects,
-      objectChanges,
-      events,
-      timestampMs,
-      transaction
-    } = await suiClient.executeTransactionBlock({
-      transactionBlock: bytes,
-      signature,
-      options: {
-        showRawEffects: true,
-        showEffects: true,
-        showObjectChanges: true,
-        showEvents: true
+    return suiClient.core.executeTransaction({
+      transaction: fromBase64(bytes),
+      signatures: [signature],
+      include: {
+        balanceChanges: true,
+        effects: true,
+        events: true,
+        objectTypes: true
       }
     });
+  };
 
-    return {
-      rawEffects,
-      bytes,
-      digest,
-      signature,
-      effects,
-      objectChanges,
-      events,
-      timestampMs,
-      transaction
-    } as any;
+  /**
+   * Wait for transaction (passthrough to the gRPC client)
+   */
+  const waitForTransaction: WalletAdapter['waitForTransaction'] = (options) => {
+    return suiClient.core.waitForTransaction(options);
   };
 
   /**
@@ -446,50 +459,61 @@ export function createWalletAdapter(
 
     const signPersonalMessageFeature =
       currentWallet.features['sui:signPersonalMessage'];
-    if (signPersonalMessageFeature) {
-      return await signPersonalMessageFeature.signPersonalMessage({
-        ...signPersonalMessageArgs,
-        account: signerAccount,
-        chain: signPersonalMessageArgs.chain ?? `sui:${suiClient.network}`
-      });
+    if (!signPersonalMessageFeature) {
+      throw new Error("This wallet doesn't support the `signPersonalMessage` feature.");
     }
 
-    // TODO: Remove this once we officially discontinue sui:signMessage in the wallet standard
-    const signMessageFeature = currentWallet.features['sui:signMessage'];
-    if (signMessageFeature) {
-      console.warn(
-        "This wallet doesn't support the `signPersonalMessage` feature... falling back to `signMessage`."
-      );
-
-      const { messageBytes, signature } = await signMessageFeature.signMessage({
-        ...signPersonalMessageArgs,
-        account: signerAccount
-      });
-      return { bytes: messageBytes, signature };
-    }
-
-    throw new Error("This wallet doesn't support the `signPersonalMessage` feature.");
+    return await signPersonalMessageFeature.signPersonalMessage({
+      ...signPersonalMessageArgs,
+      account: signerAccount,
+      chain: signPersonalMessageArgs.chain ?? defaultChain
+    });
   };
 
   /**
-   * Switch account
+   * Auto-connect: restore the persisted wallet/account once the wallet registers.
+   * Runs every time the wallet list changes while disconnected, because wallet
+   * extensions register asynchronously after page load.
    */
-  const switchAccount = async (account: WalletAccount) => {
-    if (!currentWallet) {
-      throw new Error('No wallet is connected.');
+  async function attemptAutoConnect(candidateWallets: WalletWithRequiredFeatures[]) {
+    const saved = await readAccountFromStorage(storage, storageKey);
+    if (!saved || connectionStatus !== 'disconnected') {
+      return;
     }
 
-    const accountToSelect = currentWallet.accounts.find(
-      (walletAccount) => walletAccount.address === account.address
+    const wallet = candidateWallets.find(
+      (candidate) =>
+        sanitizeWalletId(getWalletUniqueIdentifier(candidate)) === saved.walletId
     );
-    if (!accountToSelect) {
-      throw new Error(
-        `No account with address ${account?.address} is connected to ${currentWallet?.name}.`
-      );
+    if (!wallet) {
+      return;
     }
 
-    setAccountSwitched(accountToSelect);
-  };
+    // If the wallet already exposes the saved account, restore without prompting.
+    const existingAccount = wallet.accounts.find(
+      ({ address }) => address === saved.address
+    );
+
+    if (existingAccount) {
+      const suiAccounts = wallet.accounts.filter((account) =>
+        account.chains.some((chain) => chain.split(':')[0] === 'sui')
+      );
+      const intents = saved.supportedIntents ?? (await getSupportedIntents(wallet));
+
+      setWalletConnected(wallet, suiAccounts, existingAccount, intents);
+      return;
+    }
+
+    try {
+      await connectWallet({
+        wallet,
+        accountAddress: saved.address,
+        silent: true
+      });
+    } catch {
+      // Auto-connect is best-effort; a rejected silent connect is not an error.
+    }
+  }
 
   /**
    * Effects
@@ -502,16 +526,20 @@ export function createWalletAdapter(
      */
     $effect(() => {
       const walletsApi = getWallets();
-      setWalletRegistered(getRegisteredWallets(DEFAULT_PREFERRED_WALLETS));
+      wallets = getRegisteredWallets(preferredWallets);
 
       const unsubscribeFromRegister = walletsApi.on('register', () => {
-        setWalletRegistered(getRegisteredWallets());
+        wallets = getRegisteredWallets(preferredWallets);
       });
 
       const unsubscribeFromUnregister = walletsApi.on(
         'unregister',
         (unregisteredWallet) => {
-          setWalletUnregistered(getRegisteredWallets(), unregisteredWallet);
+          wallets = getRegisteredWallets(preferredWallets);
+
+          if (unregisteredWallet === currentWallet) {
+            setWalletDisconnected();
+          }
         }
       );
 
@@ -553,6 +581,7 @@ export function createWalletAdapter(
       try {
         const result = registerSlushWallet(slushWallet.name, {
           origin: slushWallet.origin,
+          metadataApiUrl: slushWallet.metadataApiUrl
         });
 
         if (isMounted && result) {
@@ -574,46 +603,20 @@ export function createWalletAdapter(
 
     /**
      * useAutoConnectWallet
-     *
-     * Original implementation returns 'disabled' | 'idle' | 'attempted', but does not seem to be used anywhere.
-     * This implementation currently only auto-connects, no use of the return value.
      */
     $effect(() => {
-      const queryFn = untrack(
-        () =>
-          async function () {
-            if (!autoConnectEnabled) {
-              return 'disabled';
-            }
-
-            if (
-              !lastConnectedWalletName ||
-              !lastConnectedAccountAddress ||
-              isConnected
-            ) {
-              return 'attempted';
-            }
-
-            const wallet = wallets?.find?.(
-              (wallet) => getWalletUniqueIdentifier(wallet) === lastConnectedWalletName
-            ) as any;
-            // const wallet = wallets?.find?.(Boolean) as any;
-
-            if (wallet) {
-              await connectWallet({
-                wallet,
-                accountAddress: lastConnectedAccountAddress,
-                silent: false
-              });
-            }
-
-            return 'attempted';
-          }
-      );
-
-      if (autoConnectEnabled) {
-        queryFn();
+      if (!autoConnectEnabled || connectionStatus !== 'disconnected') {
+        return;
       }
+
+      const candidateWallets = wallets;
+      if (!candidateWallets.length) {
+        return;
+      }
+
+      untrack(() => {
+        void attemptAutoConnect(candidateWallets);
+      });
     });
   });
 
@@ -623,6 +626,9 @@ export function createWalletAdapter(
   return {
     get suiClient() {
       return suiClient;
+    },
+    get network() {
+      return network;
     },
     get autoConnectEnabled() {
       return autoConnectEnabled;
@@ -657,35 +663,39 @@ export function createWalletAdapter(
     get isConnecting() {
       return isConnecting;
     },
+    get isReconnecting() {
+      return isReconnecting;
+    },
     get isDisconnected() {
       return isDisconnected;
     },
-    setWalletRegistered,
-    setWalletUnregistered,
-    updateWalletAccounts,
     connectWallet,
     disconnectWallet,
-    reportTransactionEffects,
+    switchAccount,
+    switchWallet,
     signTransaction,
     signAndExecuteTransaction,
-    signPersonalMessage,
-    switchAccount,
-    executeTransaction
+    executeTransaction,
+    waitForTransaction,
+    signPersonalMessage
   };
 }
 
 export const walletAdapter = createWalletAdapter({
-  rpcUrl: getFullnodeUrl('mainnet')
+  network: 'mainnet'
 });
 
 export const devnetWalletAdapter = createWalletAdapter({
-  rpcUrl: getFullnodeUrl('devnet')
+  network: 'devnet',
+  storageKey: `${DEFAULT_STORAGE_KEY}:devnet`
 });
 
 export const testnetWalletAdapter = createWalletAdapter({
-  rpcUrl: getFullnodeUrl('testnet')
+  network: 'testnet',
+  storageKey: `${DEFAULT_STORAGE_KEY}:testnet`
 });
 
 export const localnetWalletAdapter = createWalletAdapter({
-  rpcUrl: getFullnodeUrl('localnet')
+  network: 'localnet',
+  storageKey: `${DEFAULT_STORAGE_KEY}:localnet`
 });

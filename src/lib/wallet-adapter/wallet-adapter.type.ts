@@ -1,37 +1,50 @@
-import type { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
+import type { SuiGrpcClient } from '@mysten/sui/grpc';
+import type { CoreClient, SuiClientTypes } from '@mysten/sui/client';
 import type { Transaction } from '@mysten/sui/transactions';
 import type {
-  Wallet,
   WalletAccount,
   WalletWithRequiredFeatures,
-  SuiSignAndExecuteTransactionBlockInput,
-  SuiSignAndExecuteTransactionBlockOutput,
+  SuiSignTransactionInput,
   SuiSignPersonalMessageInput,
   SuiSignPersonalMessageOutput,
-  SuiSignTransactionBlockInput,
-  SuiSignTransactionBlockOutput,
-  SuiSignTransactionInput,
-  SignedTransaction,
-  SuiReportTransactionEffectsInput,
-  SuiSignAndExecuteTransactionInput,
-  SuiSignAndExecuteTransactionOutput
+  SignedTransaction
 } from '@mysten/wallet-standard';
 
+import type { StateStorage } from './wallet-adapter-storage.js';
+
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<T>;
+
+export type SuiNetwork = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
 
 export interface SlushWalletConfig {
   name: string;
   origin?: string;
+  metadataApiUrl?: string;
+}
+
+export interface CreateWalletAdapterOptions {
+  /** Network the adapter's SuiGrpcClient talks to and signs against. Defaults to 'mainnet'. */
+  network?: SuiNetwork;
+  /** gRPC fullnode URL. Defaults to the public fullnode for `network`. */
+  baseUrl?: string;
+  /** Reconnect to the last used wallet/account on page load. Defaults to true. */
+  autoConnect?: boolean;
+  /** Where the last connection is persisted. Defaults to localStorage (in-memory on SSR). */
+  storage?: StateStorage;
+  storageKey?: string;
+  /** Wallet names to order first in the wallet list. */
+  preferredWallets?: string[];
+  /** Register the Slush web wallet under this app name. */
+  slushWallet?: SlushWalletConfig;
 }
 
 /**
  * Args
  */
-export type ReportTransactionEffectsArgs = Omit<
-  PartialBy<SuiReportTransactionEffectsInput, 'account' | 'chain'>,
-  'effects'
-> & {
-  effects: string | number[];
+export type ConnectWalletArgs = {
+  wallet?: WalletWithRequiredFeatures;
+  accountAddress?: string | null;
+  silent?: boolean;
 };
 
 export type SignTransactionArgs = PartialBy<
@@ -39,91 +52,81 @@ export type SignTransactionArgs = PartialBy<
   'account' | 'chain'
 >;
 
-export type SignTransactionBlockArgs = PartialBy<
-  SuiSignTransactionBlockInput,
-  'account' | 'chain'
->;
-
 export type SignAndExecuteTransactionArgs = PartialBy<
-  Omit<SuiSignAndExecuteTransactionInput, 'transaction'>,
+  Omit<SuiSignTransactionInput, 'transaction'>,
   'account' | 'chain'
 > & {
   transaction: Transaction | string;
+  /** Override how the signed transaction is executed (defaults to the adapter's gRPC client). */
   execute?: ({
     bytes,
     signature
   }: {
     bytes: string;
     signature: string;
-  }) => Promise<any>;
+  }) => Promise<ExecuteTransactionResult>;
 };
-
-export type SignAndExecuteTransactionBlockArgs = PartialBy<
-  SuiSignAndExecuteTransactionBlockInput,
-  'account' | 'chain'
->;
 
 export type SignPersonalMessageArgs = PartialBy<SuiSignPersonalMessageInput, 'account'>;
 
 /**
  * Results
  */
-export interface SignTransactionResult extends SignedTransaction {
-  reportTransactionEffects: (effects: string) => void;
-}
+export type SignTransactionResult = SignedTransaction;
 
-// export type ExecuteTransactionResult =
-//   | {
-//       digest: string;
-//       rawEffects?: number[];
-//     }
-//   | {
-//       effects?: {
-//         bcs?: string;
-//       };
-//     };
-export type ExecuteTransactionResult = any;
+export type ExecuteTransactionResult = SuiClientTypes.TransactionResult<{
+  balanceChanges: true;
+  effects: true;
+  events: true;
+  objectTypes: true;
+}>;
 
-export type SignTransactionBlockResult = SuiSignTransactionBlockOutput;
-
-export type SignAndExecuteTransactionResult = SuiSignAndExecuteTransactionOutput;
-
-export type SignAndExecuteTransactionBlockResult =
-  SuiSignAndExecuteTransactionBlockOutput;
+/**
+ * When the wallet executes the transaction itself (sui:signAndExecuteTransaction),
+ * only `effects` is guaranteed. Use `waitForTransaction` with an `include` for
+ * events/balanceChanges/objectTypes.
+ */
+export type SignAndExecuteTransactionResult = SuiClientTypes.TransactionResult<{
+  effects: true;
+}>;
 
 export type SignPersonalMessageResult = SuiSignPersonalMessageOutput;
 
-export type WalletConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+export type WalletConnectionStatus =
+  | 'disconnected'
+  | 'connecting'
+  | 'reconnecting'
+  | 'connected';
 
 export type WalletAdapterActions = {
-  connectWallet: any;
-  disconnectWallet: any;
-  updateWalletAccounts: (accounts: readonly WalletAccount[]) => void;
-  setWalletRegistered: (updatedWallets: WalletWithRequiredFeatures[]) => void;
-  setWalletUnregistered: (
-    updatedWallets: WalletWithRequiredFeatures[],
-    unregisteredWallet: Wallet
-  ) => void;
-  reportTransactionEffects: (args: ReportTransactionEffectsArgs) => void;
+  connectWallet: (
+    args?: ConnectWalletArgs
+  ) => Promise<{ accounts: readonly WalletAccount[] }>;
+  disconnectWallet: () => Promise<void>;
+  switchAccount: (account: WalletAccount) => Promise<void>;
+  switchWallet: (
+    wallet: WalletWithRequiredFeatures
+  ) => Promise<{ accounts: readonly WalletAccount[] }>;
   signTransaction: (
     transaction: Transaction | string,
-    args: SignTransactionArgs
+    args?: SignTransactionArgs
   ) => Promise<SignTransactionResult>;
   signAndExecuteTransaction: (
     args: SignAndExecuteTransactionArgs
   ) => Promise<SignAndExecuteTransactionResult>;
-  signPersonalMessage: (
-    args: SignPersonalMessageArgs
-  ) => Promise<SignPersonalMessageResult>;
-  switchAccount: (account: WalletAccount) => void;
   executeTransaction: (args: {
     bytes: string;
     signature: string;
   }) => Promise<ExecuteTransactionResult>;
+  waitForTransaction: CoreClient['waitForTransaction'];
+  signPersonalMessage: (
+    args: SignPersonalMessageArgs
+  ) => Promise<SignPersonalMessageResult>;
 };
 
 export type WalletAdapter = {
-  suiClient: SuiClient;
+  suiClient: SuiGrpcClient;
+  network: SuiNetwork;
   autoConnectEnabled: boolean;
   wallets: WalletWithRequiredFeatures[];
   accounts: readonly WalletAccount[];
@@ -135,5 +138,6 @@ export type WalletAdapter = {
   supportedIntents: string[];
   isConnected: boolean;
   isConnecting: boolean;
+  isReconnecting: boolean;
   isDisconnected: boolean;
 } & WalletAdapterActions;

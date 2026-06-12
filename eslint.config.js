@@ -16,12 +16,33 @@ export default [
         ecmaVersion: 2020
       },
       globals: {
+        $state: 'readonly',
+        $derived: 'readonly',
+        $effect: 'readonly',
+        $props: 'readonly',
+        $bindable: 'readonly',
+        $inspect: 'readonly',
+        $host: 'readonly',
         console: 'readonly',
         process: 'readonly',
         Buffer: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
-        global: 'readonly'
+        global: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLDialogElement: 'readonly',
+        MouseEvent: 'readonly',
+        PointerEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        AbortSignal: 'readonly',
+        Node: 'readonly'
       }
     },
     plugins: {
@@ -42,13 +63,40 @@ export default [
         sourceType: 'module',
         ecmaVersion: 2020,
         extraFileExtensions: ['.svelte']
+      },
+      globals: {
+        $state: 'readonly',
+        $derived: 'readonly',
+        $effect: 'readonly',
+        $props: 'readonly',
+        $bindable: 'readonly',
+        $inspect: 'readonly',
+        $host: 'readonly',
+        console: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLDialogElement: 'readonly',
+        MouseEvent: 'readonly',
+        PointerEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        Node: 'readonly'
       }
     },
     plugins: {
       svelte
     },
     rules: {
-      ...svelte.configs.recommended.rules
+      ...svelte.configs.recommended.rules,
+      // These .svelte files use TypeScript; svelte-check is the source of truth
+      // and the base rules false-positive on type annotations and DOM globals.
+      'no-undef': 'off',
+      'no-unused-vars': 'off'
     }
   },
   {
@@ -56,6 +104,7 @@ export default [
       '.DS_Store',
       'node_modules/**',
       'build/**',
+      'dist/**',
       '.svelte-kit/**',
       'package/**',
       '.env',

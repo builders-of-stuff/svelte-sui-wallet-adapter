@@ -1,19 +1,24 @@
 {
   "name": "@builders-of-stuff/svelte-sui-wallet-adapter",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
+  "sideEffects": false,
+  "license": "MIT",
   "homepage": "https://github.com/builders-of-stuff/svelte-sui-wallet-adapter",
   "repository": {
     "type": "git",
-    "url": "https://github.com/builders-of-stuff/svelte-sui-wallet-adapter"
+    "url": "git+https://github.com/builders-of-stuff/svelte-sui-wallet-adapter.git"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && pnpm run package",
     "preview": "vite preview",
-    "package": "svelte-kit sync && svelte-package && node scripts/extract-css.js && publint",
+    "package": "svelte-kit sync && svelte-package && publint",
     "prepublishOnly": "pnpm run package",
     "test": "pnpm run test:integration && pnpm run test:unit",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -27,8 +32,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "svelte": "./dist/index.js"
-    },
-    "./styles.css": "./dist/styles.css"
+    }
   },
   "files": [
     "dist",
@@ -36,31 +40,24 @@
     "!dist/**/*.spec.*"
   ],
   "peerDependencies": {
-    "svelte": "^5.0.0",
-    "tailwindcss": "^4.1.13"
+    "svelte": "^5.0.0"
   },
   "dependencies": {
-    "@mysten/slush-wallet": "^0.2.0",
-    "@mysten/sui": "^1.38.0",
-    "@mysten/wallet-standard": "0.17.0",
-    "@sveltejs/kit": "2.39.1",
-    "svelte": "5.38.10"
+    "@mysten/slush-wallet": "^1.0.5",
+    "@mysten/sui": "^2.17.0",
+    "@mysten/wallet-standard": "^0.20.3"
   },
   "devDependencies": {
-    "@internationalized/date": "^3.9.0",
-    "@lucide/svelte": "^0.515.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.28.1",
     "@sveltejs/adapter-auto": "^6.1.0",
+    "@sveltejs/kit": "^2.39.1",
     "@sveltejs/package": "^2.2.7",
     "@sveltejs/vite-plugin-svelte": "^6.2.0",
-    "@tailwindcss/forms": "^0.5.9",
-    "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.0.0",
     "@types/eslint": "9.6.1",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
-    "bits-ui": "^2.9.8",
-    "clsx": "^2.1.1",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.12.3",
@@ -68,13 +65,11 @@
     "prettier-plugin-svelte": "^3.1.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "publint": "^0.3.12",
+    "svelte": "^5.38.10",
     "svelte-check": "^4.3.1",
-    "svelte-radix": "^2.0.2",
-    "tailwind-merge": "^3.3.1",
-    "tailwind-variants": "^1.0.0",
+    "svelte-eslint-parser": "^1.8.0",
     "tailwindcss": "^4.0.0",
     "tslib": "^2.4.1",
-    "tw-animate-css": "^1.3.8",
     "typescript": "^5.7.3",
     "vite": "^7.1.5",
     "vitest": "^3.2.4"

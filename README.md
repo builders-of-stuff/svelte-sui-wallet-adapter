@@ -1,42 +1,17 @@
 # Svelte Sui Wallet Adapter
 
-A Sui wallet adapter for use with sveltekit and svelte 5.
+A Sui wallet adapter for SvelteKit and Svelte 5.
 
-Requires `tailwindcss 4+` and `shadcn-svelte`.
+Zero setup: no Tailwind, no shadcn-svelte, no peer UI dependencies. Components ship
+with their own scoped styles and are themeable via CSS custom properties.
 
 ## Getting started
 
 ```bash
-pnpm dlx @svelte-add/tailwindcss@latest
-pnpm dlx shadcn-svelte@latest init
-pnpm install bits-ui
-
-pnpm dlx shadcn-svelte@latest add button
-pnpm dlx shadcn-svelte@latest add dialog
-pnpm dlx shadcn-svelte@latest add dropdown-menu
-
 pnpm install @builders-of-stuff/svelte-sui-wallet-adapter
 ```
 
-### Import the CSS
-
-Add the component styles to your app. You have two options:
-
-**Option 1: Import in your main layout or app file**
-
-```js
-// src/app.html or src/routes/+layout.svelte
-import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
-```
-
-**Option 2: Import in your CSS file**
-
-```css
-/* src/app.css */
-@import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
-```
-
-### Usage examples
+### Usage
 
 ```svelte
 <!-- +page.svelte -->
@@ -50,52 +25,115 @@ import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 <ConnectButton {walletAdapter} />
 ```
 
+Pre-configured adapters are exported for each network: `walletAdapter` (mainnet),
+`testnetWalletAdapter`, `devnetWalletAdapter`, and `localnetWalletAdapter`. Or create
+your own:
+
+```ts
+import { createWalletAdapter } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+
+const walletAdapter = createWalletAdapter({
+  network: 'testnet' // 'mainnet' | 'testnet' | 'devnet' | 'localnet'
+  // baseUrl: 'https://my-own-fullnode.example.com:443',
+  // autoConnect: false,           // reconnect to the last wallet on load (default true)
+  // storageKey: 'my-app:wallet',  // localStorage key for persistence
+  // preferredWallets: ['Slush'],  // wallet names to order first in the modal
+  // slushWallet: { name: 'My App' } // register the Slush web wallet
+});
+```
+
+### Reading state and signing
+
+The adapter exposes reactive state (Svelte 5 runes) and actions:
+
 ```svelte
-<!-- +page.svelte -->
 <script lang="ts">
+  import { Transaction } from '@mysten/sui/transactions';
   import {
     ConnectButton,
     walletAdapter
   } from '@builders-of-stuff/svelte-sui-wallet-adapter';
 
-  // Access properties from walletAdapter
   $effect(() => {
     console.log(walletAdapter.currentAccount);
     console.log(walletAdapter.isConnected);
   });
 
-  // Invoke methods from walletAdapter
-  let response1 = walletAdapter.suiClient
-    .getOwnedObjects({
-      owner: walletAdapter.currentAccount ? walletAdapter.currentAccount.address : ''
-      // filter: {
-      //   StructType: `${MY_FIRST_PACKAGE_ID}::my_module::Counter`
-      // }
-    })
-    .then((res) => {
-      console.log('res: ', res);
+  async function doSomething() {
+    const tx = new Transaction();
+    // ... build the transaction ...
+
+    const result = await walletAdapter.signAndExecuteTransaction({
+      transaction: tx
     });
 
-  let response2 = await walletAdapter.signAndExecuteTransaction({
-    transaction: tx as any,
-    account: walletAdapter.currentAccount as any,
-    chain: walletAdapter!.currentAccount!.chains[0],
-    execute: async ({ bytes, signature }) =>
-      await walletAdapter.suiClient.executeTransactionBlock({
-        transactionBlock: bytes,
-        signature,
-        options: {
-          // Raw effects are required so the effects can be reported back to the wallet
-          showRawEffects: true,
-          // Select additional data to return
-          showObjectChanges: true
-        }
-      })
-  });
+    // result is a SuiClientTypes.TransactionResult tagged union:
+    if (result.$kind === 'Transaction') {
+      console.log('digest:', result.Transaction.digest);
+    }
+
+    // Need events/object types/balance changes? Wait for the transaction:
+    const confirmed = await walletAdapter.waitForTransaction({
+      digest: (result.Transaction ?? result.FailedTransaction).digest,
+      include: { events: true, objectTypes: true, balanceChanges: true }
+    });
+  }
+
+  async function query() {
+    // walletAdapter.suiClient is a SuiGrpcClient from @mysten/sui/grpc
+    const owned = await walletAdapter.suiClient.core.listOwnedObjects({
+      owner: walletAdapter.currentAccount!.address,
+      include: { json: true }
+    });
+  }
 </script>
 
 <ConnectButton {walletAdapter} />
 ```
+
+Other actions: `connectWallet`, `disconnectWallet`, `switchAccount`, `switchWallet`,
+`signTransaction`, `executeTransaction`, `signPersonalMessage`.
+
+### GraphQL
+
+The adapter's client is gRPC, but the library exports the public GraphQL endpoint
+URLs for use with `SuiGraphQLClient`:
+
+```ts
+import { SuiGraphQLClient } from '@mysten/sui/graphql';
+import { getGraphqlUrl } from '@builders-of-stuff/svelte-sui-wallet-adapter';
+
+const graphqlClient = new SuiGraphQLClient({
+  url: getGraphqlUrl('testnet'),
+  network: 'testnet'
+});
+```
+
+### Theming
+
+Components use scoped styles with `--sswa-*` CSS custom property hooks and follow the
+OS color scheme automatically (via `light-dark()`). Override any token globally:
+
+```css
+:root {
+  --sswa-primary: #4da2ff;
+  --sswa-primary-foreground: #ffffff;
+  --sswa-background: #ffffff;
+  --sswa-foreground: #18181b;
+  --sswa-secondary: #f4f4f5;
+  --sswa-secondary-foreground: #18181b;
+  --sswa-muted: #f4f4f5;
+  --sswa-muted-foreground: #71717a;
+  --sswa-border: #e4e4e7;
+  --sswa-ring: #4da2ff;
+  --sswa-radius: 0.75rem;
+  --sswa-font-sans: inherit;
+  --sswa-overlay: rgb(24 24 27 / 0.4);
+}
+```
+
+To force a scheme instead of following the OS, set `color-scheme: light` (or `dark`)
+on an ancestor element.
 
 ![Connect Button](docs/images/button.png)
 
@@ -103,9 +141,36 @@ import '@builders-of-stuff/svelte-sui-wallet-adapter/styles.css';
 
 ![Account Dropdown Menu](docs/images/dropdown.png)
 
+## Migrating from v2
+
+v3 is a major overhaul:
+
+- **No more UI peer dependencies.** Tailwind, shadcn-svelte, bits-ui, and svelte-radix
+  are no longer required. Remove the `styles.css` import — the `./styles.css` export
+  is gone.
+- **gRPC client.** `walletAdapter.suiClient` is now a `SuiGrpcClient`
+  (`@mysten/sui` v2). JSON-RPC methods like `getOwnedObjects` and
+  `executeTransactionBlock` are replaced by the core API
+  (`suiClient.core.listOwnedObjects`, `suiClient.core.executeTransaction`, ...).
+- **`createWalletAdapter` options changed.** `rpcUrl` → `network` (+ optional
+  `baseUrl`). New: `storage`, `storageKey`, `preferredWallets`.
+- **Persistence + autoConnect.** Connections persist to localStorage and
+  `autoConnect` now defaults to `true`.
+- **Results changed.** `signAndExecuteTransaction`/`executeTransaction` return a
+  `SuiClientTypes.TransactionResult` tagged union (no more `objectChanges`/`rawEffects`).
+- **Removed.** `reportTransactionEffects` (feature removed from the wallet standard;
+  wallets that execute transactions handle effects reporting themselves), the
+  deprecated `sui:signMessage` fallback in `signPersonalMessage`, and the internal
+  `setWalletRegistered`/`setWalletUnregistered`/`updateWalletAccounts` actions.
+- **New.** `switchWallet`, `waitForTransaction`, `isReconnecting`, "copy address" /
+  "switch wallet" in the account dropdown, install links and connecting/error states
+  in the connect modal.
+- **Node >= 22** is required (inherited from `@mysten/sui` v2).
+
 ## Current known issues
 
-- Client-side only, probably doesn't work with ssr
+- Components and adapters server-render safely, but wallet detection and
+  connection are browser-only (the wallet standard lives in the browser)
 
 ## Developing
 
