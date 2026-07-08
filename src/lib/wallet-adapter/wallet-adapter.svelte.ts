@@ -17,6 +17,7 @@ import {
 } from '@mysten/sui/client';
 import type { Transaction } from '@mysten/sui/transactions';
 import { registerSlushWallet } from '@mysten/slush-wallet';
+import { isEnokiNetwork, registerEnokiWallets } from '@mysten/enoki';
 
 import {
   getRegisteredWallets,
@@ -61,7 +62,8 @@ export function createWalletAdapter({
   storage = getDefaultStorage(),
   storageKey = DEFAULT_STORAGE_KEY,
   preferredWallets = DEFAULT_PREFERRED_WALLETS,
-  slushWallet
+  slushWallet,
+  enokiWallets
 }: CreateWalletAdapterOptions = {}): WalletAdapter {
   const suiClient = new SuiGrpcClient({ network, baseUrl });
   const defaultChain = `sui:${network}` as const;
@@ -597,6 +599,35 @@ export function createWalletAdapter({
         isMounted = false;
         if (cleanup) cleanup();
       };
+    });
+
+    /**
+     * useEnokiWallets: register zkLogin social-login wallets ("Sign in with
+     * Google" etc.) as wallet-standard wallets, backed by Enoki.
+     */
+    $effect(() => {
+      if (!enokiWallets) {
+        return;
+      }
+
+      if (!isEnokiNetwork(network)) {
+        console.warn(
+          `Enoki zkLogin wallets are not available on ${network}; skipping registration.`
+        );
+        return;
+      }
+
+      try {
+        const { unregister } = registerEnokiWallets({
+          ...enokiWallets,
+          client: suiClient,
+          network
+        });
+
+        return unregister;
+      } catch (error) {
+        console.error('Failed to register Enoki zkLogin wallets:', error);
+      }
     });
 
     // useUnsafeBurnerWallet (TODO)

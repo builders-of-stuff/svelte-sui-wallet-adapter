@@ -50,7 +50,7 @@ This is a Sui wallet adapter library for SvelteKit and Svelte 5, providing walle
 
 ### Key Components
 
-- **WalletAdapter** - Central state management for wallet connections using Svelte 5 runes; created via `createWalletAdapter({ network, baseUrl, autoConnect, storage, storageKey, preferredWallets, slushWallet })`
+- **WalletAdapter** - Central state management for wallet connections using Svelte 5 runes; created via `createWalletAdapter({ network, baseUrl, autoConnect, storage, storageKey, preferredWallets, slushWallet, enokiWallets })`
 - **ConnectButton** - Primary UI component for wallet connection
 - **ConnectModal** - Modal for wallet selection and connection flow
 
@@ -62,7 +62,7 @@ This is a Sui wallet adapter library for SvelteKit and Svelte 5, providing walle
 
 ### Dependencies
 
-- Built on **Mysten Labs Sui SDK** (`@mysten/sui` v2, `@mysten/wallet-standard`, `@mysten/slush-wallet`)
+- Built on **Mysten Labs Sui SDK** (`@mysten/sui` v2, `@mysten/wallet-standard`, `@mysten/slush-wallet`, `@mysten/enoki` for zkLogin wallets)
 - `walletAdapter.suiClient` is a **SuiGrpcClient** (`@mysten/sui/grpc`); chain data access goes through `suiClient.core.*` (the JSON-RPC client is deprecated upstream)
 - Uses **SvelteKit** for packaging and **Svelte 5** with runes for reactivity
 - Only peer dependency: `svelte ^5`

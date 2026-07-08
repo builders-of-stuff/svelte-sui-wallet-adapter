@@ -38,9 +38,29 @@ const walletAdapter = createWalletAdapter({
   // autoConnect: false,           // reconnect to the last wallet on load (default true)
   // storageKey: 'my-app:wallet',  // localStorage key for persistence
   // preferredWallets: ['Slush'],  // wallet names to order first in the modal
-  // slushWallet: { name: 'My App' } // register the Slush web wallet
+  // slushWallet: { name: 'My App' }, // register the Slush web wallet
+  // enokiWallets: {               // register zkLogin social-login wallets
+  //   apiKey: 'enoki_public_...',
+  //   providers: { google: { clientId: '....apps.googleusercontent.com' } }
+  // }
 });
 ```
+
+### zkLogin (Enoki) wallets
+
+Pass `enokiWallets` to register zkLogin social-login wallets ("Sign in with Google",
+Facebook, Twitch) backed by [Enoki](https://portal.enoki.mystenlabs.com). They show up
+in the connect modal alongside extension wallets and support the same signing API.
+Requires an Enoki public API key and OAuth client IDs; available on mainnet, testnet,
+and devnet (not localnet).
+
+Any zkLogin wallet that implements the wallet standard also works without
+configuration — the adapter picks up every registered Sui wallet automatically
+(the Slush web wallet, registered via `slushWallet`, uses zkLogin under the hood).
+
+Helpers are re-exported for distinguishing zkLogin wallets in custom UI:
+`isEnokiWallet`, `isGoogleWallet`, `isFacebookWallet`, `isTwitchWallet`,
+`getWalletMetadata`, and `getSession`.
 
 ### Reading state and signing
 

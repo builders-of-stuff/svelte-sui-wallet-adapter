@@ -37,15 +37,5 @@
         ]
       }
     ]
-    // "Notification": [
-    //   {
-    //     "hooks": [
-    //       {
-    //         "type": "command",
-    //         "command": "sounds=(.claude/sounds/jobs-finished.wav .claude/sounds/orders-captain.wav .claude/sounds/reporting-for-duty.wav); nohup afplay \"${sounds[$RANDOM % ${#sounds[@]}]}\" >/dev/null 2>&1 &"
-    //       }
-    //     ]
-    //   }
-    // ]
   }
 }

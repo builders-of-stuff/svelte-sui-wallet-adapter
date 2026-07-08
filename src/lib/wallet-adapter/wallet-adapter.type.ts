@@ -10,6 +10,8 @@ import type {
   SignedTransaction
 } from '@mysten/wallet-standard';
 
+import type { RegisterEnokiWalletsOptions } from '@mysten/enoki';
+
 import type { StateStorage } from './wallet-adapter-storage.js';
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<T>;
@@ -21,6 +23,17 @@ export interface SlushWalletConfig {
   origin?: string;
   metadataApiUrl?: string;
 }
+
+/**
+ * Enoki zkLogin wallets ("Sign in with Google" etc.). The adapter supplies the
+ * client and network; everything else mirrors @mysten/enoki's
+ * registerEnokiWallets options. Requires an Enoki public API key
+ * (https://portal.enoki.mystenlabs.com). Not available on localnet.
+ */
+export type EnokiWalletsConfig = Pick<
+  RegisterEnokiWalletsOptions,
+  'apiKey' | 'apiUrl' | 'providers' | 'windowFeatures' | 'additionalEpochs'
+>;
 
 export interface CreateWalletAdapterOptions {
   /** Network the adapter's SuiGrpcClient talks to and signs against. Defaults to 'mainnet'. */
@@ -36,6 +49,8 @@ export interface CreateWalletAdapterOptions {
   preferredWallets?: string[];
   /** Register the Slush web wallet under this app name. */
   slushWallet?: SlushWalletConfig;
+  /** Register Enoki zkLogin wallets (Google/Facebook/Twitch social login). */
+  enokiWallets?: EnokiWalletsConfig;
 }
 
 /**
