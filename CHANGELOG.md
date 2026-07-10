@@ -1,3 +1,16 @@
+# 3.0.1 (2026-07-10)
+
+- `signAndExecuteTransaction` now signs in the wallet and executes via the
+  adapter's gRPC client whenever the wallet supports signing — the result
+  carries the full data set (`events`, `balanceChanges`, `objectTypes`),
+  which wallet-side execution cannot return.
+- Wallet-side execution remains only as a fallback for wallets that cannot
+  sign without executing, and only through the modern
+  `sui:signAndExecuteTransaction` feature. The legacy
+  `signAndExecuteTransactionBlock` shim is no longer reachable — it crashes
+  on wallets whose responses omit the raw transaction
+  (`Cannot read properties of undefined (reading 'txSignatures')`).
+
 # 2.1.0 (2025-09-26)
 
 - Add `registerSlushWallet` support

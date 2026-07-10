@@ -345,9 +345,17 @@ export function createWalletAdapter({
   /**
    * Sign & execute transaction
    *
-   * Prefers wallet-side execution (sui:signAndExecuteTransaction) when available;
-   * otherwise signs locally and executes via the adapter's gRPC client (or a
-   * custom `execute` function).
+   * Signs in the wallet and executes via the adapter's gRPC client (or a
+   * custom `execute` function) whenever the wallet can sign — this returns
+   * the COMPLETE result (events, balance changes, object types), which
+   * wallet-side execution cannot provide.
+   *
+   * Wallet-side execution (sui:signAndExecuteTransaction) is the fallback
+   * for wallets that cannot sign without executing — and only via the
+   * modern feature: wallet-standard's legacy signAndExecuteTransactionBlock
+   * shim re-parses the wallet's raw response and crashes on wallets that
+   * don't return it ("Cannot read properties of undefined (reading
+   * 'txSignatures')").
    */
   const signAndExecuteTransaction = async ({
     transaction,
@@ -379,11 +387,24 @@ export function createWalletAdapter({
       }
     };
 
-    const walletCanExecute =
-      currentWallet.features['sui:signAndExecuteTransaction'] ||
-      currentWallet.features['sui:signAndExecuteTransactionBlock'];
+    const walletCanSign =
+      currentWallet.features['sui:signTransaction'] ||
+      currentWallet.features['sui:signTransactionBlock'];
 
-    if (!execute && walletCanExecute) {
+    if (walletCanSign) {
+      const { bytes, signature } = await standardSignTransaction(currentWallet, {
+        ...args,
+        transaction: transactionWrapper,
+        account: signerAccount,
+        chain
+      });
+
+      const result = await (execute ?? executeTransaction)({ bytes, signature });
+
+      return result as SignAndExecuteTransactionResult;
+    }
+
+    if (!execute && currentWallet.features['sui:signAndExecuteTransaction']) {
       const result = await standardSignAndExecuteTransaction(currentWallet, {
         ...args,
         transaction: transactionWrapper,
@@ -394,23 +415,9 @@ export function createWalletAdapter({
       return transactionResultFromWalletOutput(result);
     }
 
-    if (
-      !currentWallet.features['sui:signTransaction'] &&
-      !currentWallet.features['sui:signTransactionBlock']
-    ) {
-      throw new Error("This wallet doesn't support the `signTransaction` feature.");
-    }
-
-    const { bytes, signature } = await standardSignTransaction(currentWallet, {
-      ...args,
-      transaction: transactionWrapper,
-      account: signerAccount,
-      chain
-    });
-
-    const result = await (execute ?? executeTransaction)({ bytes, signature });
-
-    return result as SignAndExecuteTransactionResult;
+    throw new Error(
+      'This wallet supports neither `signTransaction` nor `signAndExecuteTransaction`.'
+    );
   };
 
   /**
