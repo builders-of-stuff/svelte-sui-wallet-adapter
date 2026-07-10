@@ -11,6 +11,18 @@
   on wallets whose responses omit the raw transaction
   (`Cannot read properties of undefined (reading 'txSignatures')`).
 
+# 3.0.0 (2026-07-08)
+
+- Major overhaul: `@mysten/sui` v2 (`SuiGrpcClient`) replaces the v1
+  JSON-RPC client; `signAndExecuteTransaction`/`executeTransaction` return
+  the v2 `TransactionResult` tagged union.
+- Zero UI peer dependencies — components ship scoped styles, themeable via
+  `--sswa-*` CSS custom properties with automatic light/dark
+  (`light-dark()`).
+- Enoki zkLogin wallet support (`enokiWallets`: Google/Facebook/Twitch
+  sign-in in the connect modal) alongside Slush.
+- Requires Node >= 22.
+
 # 2.1.0 (2025-09-26)
 
 - Add `registerSlushWallet` support
